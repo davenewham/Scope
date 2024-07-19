@@ -24,7 +24,7 @@ var playerList = [];
 
 //Gun
 var reloading = false;
-var currentWeapon = {};
+var currentWeapon = {}; 
 var loadedAmmo = 50;
 var availableRoundsLeft = 20;
 var weaponDefinitions = [

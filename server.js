@@ -16,20 +16,20 @@ var socketCounter = 0;
 
 async function loadConf() {
   // load game config
-  let defaultSettingsData = await fsp.readFile('config/game/default.json').catch(err=>{
+  let defaultSettingsData = await fsp.readFile('config/game/default.json').catch(err => {
     console.error(err);
     return;
   });
   defaultSettings = JSON.parse(stripJsonComments(defaultSettingsData.toString()));
 
   // Read weapon configs
-  let files = await fsp.readdir('config/weapon').catch(err=>{
+  let files = await fsp.readdir('config/weapon').catch(err => {
     console.error('Unable to read weapon config directory: ' + err);
     return;
   });
-  files.forEach(async file=>{
+  files.forEach(async file => {
     console.log(colors.yellow("Found weapon config", file));
-    let data = await fsp.readFile('config/weapon/' + file).catch(err=>{console.log("Failed to read file", err);});
+    let data = await fsp.readFile('config/weapon/' + file).catch(err => { console.log("Failed to read file", err); });
     weaponDefinitions.push(JSON.parse(stripJsonComments(data.toString())));
   });
 }
@@ -51,7 +51,7 @@ var game = {
   // },
 };
 
-loadConf().then(()=>{
+loadConf().then(() => {
   game.settings = defaultSettings;
 });
 game.id = makeUID(6);
@@ -77,7 +77,7 @@ httpServer.listen(serverPort, () => {
 });
 
 wss.on("connection", (ws) => {
-  ws.id = socketCounter+=1; // Label this socket
+  ws.id = socketCounter += 1; // Label this socket
   console.log("Websocket Connection | WSID:", ws.id);
 
   ws.on("message", message => {
@@ -130,7 +130,7 @@ wss.on("connection", (ws) => {
     }
   });
   ws.on("close", () => {
-    let missingPlayerIndex = ws.game.players.findIndex(player => {return player.ws.id == ws.id});
+    let missingPlayerIndex = ws.game.players.findIndex(player => { return player.ws.id == ws.id });
     if (missingPlayerIndex == -1) {
       console.log("could not find player to remove");
       return;
@@ -178,7 +178,7 @@ function startGame(game) {
         cooldown: game.settings.preStartCooldown,
       }));
     });
-    
+
     setTimeout(() => {
       game.state = "started";
       game.players.forEach(player => {
@@ -186,7 +186,7 @@ function startGame(game) {
       });
       let currentTime = new Date();
       game.gameEnd = new Date(currentTime.getDate() + (60000 * game.settings.timeMins));
-      mainTimer = setTimeout(()=>{endGame(game)}, 60000 * game.settings.timeMins);
+      mainTimer = setTimeout(() => { endGame(game) }, 60000 * game.settings.timeMins);
     }, game.settings.preStartCooldown);
   } else {
     console.log("Game already started");
@@ -202,6 +202,18 @@ function endGame(game) {
 }
 
 function handleGameMessage(ws, message) {
+  // declare player variable
+  let player;
+
+  // attempt to set player variable
+  try {
+    player = ws.game.players.find(player => player.ws.id == ws.id);
+  } catch (e) {
+    // if an error occurs, log it (optional) and proceed
+    console.error("Failed to set player:", e);
+  }
+
+  // handle message
   switch (message.msgType) {
     case "getGameEndTime":
       if (ws.game.state == "started") {
@@ -210,7 +222,6 @@ function handleGameMessage(ws, message) {
       }
       break;
     case "setState":
-      let player = ws.game.players.find(player => {return player.ws.id == ws.id});
       if (!player) {
         return;
       }
@@ -218,8 +229,8 @@ function handleGameMessage(ws, message) {
       if (ws.game.settings.startOnReady == true) {
         if (allPlayersReady(ws.game.players)) {
           console.log("All players are ready.");
-          setTimeout(()=>{
-            if( allPlayersReady(ws.game.players) && (ws.game.state == "waiting") ) {
+          setTimeout(() => {
+            if (allPlayersReady(ws.game.players) && (ws.game.state == "waiting")) {
               startGame(ws.game);
             }
           }, 2000);
@@ -232,9 +243,23 @@ function handleGameMessage(ws, message) {
       break;
     case "kill":
       let killer = ws.game.players.find(player => {
-        return player.gunID == message.info.shotID;
+        console.log('== Try to match the shooter id with a player ==')
+        console.log("player.gunID");
+        console.log(player.gunID);
+
+        console.log("message.info.shooterID:");
+        console.log(message.info.shooterID);
+
+        return player.gunID == message.info.shooterID;
       });
-      killer.ws.send(killer, JSON.stringify({ "msgType": "kill" }));
+
+      try {
+        killer.ws.send(killer, JSON.stringify({ "msgType": "kill" }));
+      } catch (error) {
+        console.log("Failed to set killer");
+        console.log("killer:");
+        console.log(killer); // wasn't defined
+      }
       break;
   }
 }

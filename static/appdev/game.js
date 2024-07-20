@@ -78,7 +78,7 @@ function preGameStart(cooldown) {
 function startGame () {
   startGun();
   console.log("Game Started");
-  secondsLeft = gameSettings.timeMins * 60;
+  secondsLeft = gameSettings.gameTimeMins * 60;
   timer();
   gameTimer = setInterval(timer, 1000);
   syncIndicators();
@@ -150,6 +150,8 @@ function findWeapon(name) {
 }
 
 function getPlayerFromID(shotID) {
+  console.log("Shots fired. Shot ID:");
+  console.log(shotID);
   let thePlayer = null;
   playerList.forEach((player, i) => {
     if (player.gunID == shotID) {
@@ -157,9 +159,10 @@ function getPlayerFromID(shotID) {
     }
   });
   if (thePlayer !== null) {
-    return thePlayer;
+    return thePlayer; 
   }else{
     console.log("Could not find player:", name);
+    return null;
   }
 }
 
@@ -268,7 +271,7 @@ function showHit() {
 }
 
 function dead(deathInfo) {
-  let countdown = 5;
+  let countdown = gameSettings.deadTimeSeconds;
   updateDeathScreen();
   document.getElementById("respawnTimer").innerHTML = countdown;
   RecoilGun.removeClip();
@@ -296,7 +299,14 @@ function enemyKilled() {
 
 function updateDeathScreen() {
   let death = deathList[deathList.length - 1];
-  document.getElementById("killedBy").innerHTML = getPlayerFromID(death.shooterID).username;
+
+  // try to get the player name, write unknown otherwise
+  try {
+    document.getElementById("killedBy").innerHTML = getPlayerFromID(death.shooterID).username;
+  } catch (error) {
+    document.getElementById("killedBy").innerHTML = "Unknown";
+  }
+  
   let killWeapon = "Rick roll";
   weaponDefinitions.forEach((weapon, i) => {
     if (weapon.slotID == death.weapon) {

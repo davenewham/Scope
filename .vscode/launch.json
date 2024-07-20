@@ -6,7 +6,7 @@
     "configurations": [
         {
             "type": "node",
-            "runtimeExecutable": "/home/zach/.nvm/versions/node/v17.4.0/bin/node",
+            "runtimeExecutable": "/usr/local/bin/node",
             "request": "launch",
             "name": "Node",
             "skipFiles": [

@@ -364,3 +364,9 @@ progress[value]::-webkit-progress-value {
   font-style: italic;
   color: #237dd1;
 }
+
+
+/* Hide things that doesn't work yet during development */
+#leaderboardBottom #continueButton {
+  display: none;
+}

@@ -152,6 +152,10 @@ function findWeapon(name) {
 function getPlayerFromID(shotID) {
   console.log("Shots fired. Shot ID:");
   console.log(shotID);
+
+  // workaround test: substract one from the shotID
+  shotID = shotID - 1;
+
   let thePlayer = null;
   playerList.forEach((player, i) => {
     if (player.gunID == shotID) {

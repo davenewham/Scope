@@ -370,3 +370,8 @@ progress[value]::-webkit-progress-value {
 #leaderboardBottom #continueButton {
   display: none;
 }
+
+#mainStatsBar > div:nth-child(1),
+#mainStatsBar > div:nth-child(2) {
+  display: none;
+}

@@ -3,8 +3,8 @@
     "description":"Default Recoil Weapon",
     "slotID":6,                 // Slot ID: which slot this profile will be loaded into. Must be different for each weapon config
     "damage":8,                 // damage per shot
-    "maxLoadedAmmo":500,         
-    "maxClips":9,
+    "maxLoadedAmmo":10,         // number of ammo you can use before reload
+    "maxClips":24,              // number of clips of ammo. Total ammo = maxLoadedAmmo * maxClips
     "behavior":{
       "triggerMode": "0x01",    // Full auto: 0xFE, Plasma: 0x00, Burst of up to N shots: 0x01-0xFD
       "rateOfFire": 3,          // Rate of fire for burst or plasma mode, in units of 50ms

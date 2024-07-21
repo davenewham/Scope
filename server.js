@@ -145,7 +145,7 @@ wss.on("connection", (ws) => {
 			return;
 		}
 		console.log(`${ws.game.players[missingPlayerIndex].username || "Player"} Disconnected`);
-		if (ws.game.state == "waiting") {
+		if (game.state == "waiting") {
 			ws.game.players.splice(missingPlayerIndex, 1);
 			lobbyUpdate(ws.game.players);
 		}
@@ -172,7 +172,7 @@ function allPlayersReady(players) {
 	return ready;
 }
 
-function startGame(game) {
+function startGame() {
 	if (game.state == "waiting") {
 		console.log(`Starting Game (${game.id})`);
 		game.state = "starting";
@@ -194,15 +194,15 @@ function startGame(game) {
 				player.ws.send(JSON.stringify({ msgType: "updateGameState", state: "started" }));
 			});
 			let currentTime = new Date();
-			game.gameEnd = new Date(currentTime.getDate() + (60000 * game.settings.timeMins));
-			mainTimer = setTimeout(() => { endGame(game) }, 60000 * game.settings.timeMins);
+			game.gameEnd = new Date(currentTime.getTime() + (60000 * game.settings.timeMins)); // Korrekte Zeitberechnung
+			mainTimer = setTimeout(() => { endGame() }, 60000 * game.settings.timeMins);
 		}, game.settings.preStartCooldown);
 	} else {
 		console.log("Game already started");
 	}
 }
 
-function endGame(game) {
+function endGame() {
 	game.players.forEach(player => {
 		player.ws.send(JSON.stringify({ msgType: "updateGameState", state: "ended" }));
 	});
@@ -225,7 +225,7 @@ function handleGameMessage(ws, message) {
 	// handle message
 	switch (message.msgType) {
 		case "getGameEndTime":
-			if (ws.game.state == "started") {
+			if (game.state == "started") {
 				// get remaining battle time
 				sendToSID(ws.id, JSON.stringify({ "msgType": "remainingTime", "time": ws.game.gameEnd }));
 			}
@@ -239,8 +239,8 @@ function handleGameMessage(ws, message) {
 				if (allPlayersReady(ws.game.players)) {
 					console.log("All players are ready.");
 					setTimeout(() => {
-						if (allPlayersReady(ws.game.players) && (ws.game.state == "waiting")) {
-							startGame(ws.game);
+						if (allPlayersReady(ws.game.players) && (game.state == "waiting")) {
+							startGame();
 						}
 					}, 2000);
 				}
@@ -248,7 +248,7 @@ function handleGameMessage(ws, message) {
 			lobbyUpdate(ws.game.players);
 			break;
 		case "forceStartGame":
-			startGame(ws.game);
+			startGame();
 			break;
 		case "kill":
 			let killer = ws.game.players.find(player => {

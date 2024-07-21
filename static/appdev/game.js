@@ -11,8 +11,8 @@ var gameSettings = {};
 
 // Player
 var playerSettings = {
-  vibrateOnHit:true,
-  recoil:true,
+  vibrateOnHit: true,
+  recoil: true,
 };
 var playerGameData = {};
 var playerHealth = 100;
@@ -24,7 +24,7 @@ var playerList = [];
 
 //Gun
 var reloading = false;
-var currentWeapon = {}; 
+var currentWeapon = {};
 var loadedAmmo = 50;
 var availableRoundsLeft = 20;
 var weaponDefinitions = [
@@ -42,13 +42,17 @@ function lobbyUpdated(players) {
     lobbyRoster.appendChild(container);
   });
 }
-function ready () {
+
+/**
+ * Is executed every time the "ready" button is pressed to send the ready state to the server.
+ */
+function ready() {
   if (readyBtn.classList.contains("readyBtnPressed")) {
     readyBtn.classList.remove("readyBtnPressed");
-    socket.send(JSON.stringify({'msgType':'setState', 'state':'lobby'}));
+    socket.send(JSON.stringify({ 'msgType': 'setState', 'state': 'lobby' }));
   } else {
     readyBtn.classList.add("readyBtnPressed");
-    socket.send(JSON.stringify({'msgType':'setState', 'state':'ready'}));
+    socket.send(JSON.stringify({ 'msgType': 'setState', 'state': 'ready' }));
   }
 }
 
@@ -62,7 +66,7 @@ function preGameStart(cooldown) {
   document.getElementById("lobby").style.display = "none";
   let countdown = cooldown / 1000;
   document.getElementById("startCountdownNumber").innerHTML = countdown;
-  startCountdown = setInterval(()=>{
+  startCountdown = setInterval(() => {
     if (countdown <= 1) {
       startGame();
       clearInterval(startCountdown);
@@ -75,7 +79,7 @@ function preGameStart(cooldown) {
   //show countdown stuff hide all setup stuff
 }
 
-function startGame () {
+function startGame() {
   startGun();
   console.log("Game Started");
   secondsLeft = gameSettings.gameTimeMins * 60;
@@ -93,8 +97,8 @@ function endGame() {
 
 function showLeaderboard() {
   let fade = [
-    {opacity:"0"},
-    {opacity:"1"},
+    { opacity: "0" },
+    { opacity: "1" },
   ];
   leaderBoard.style.display = "grid";
   leaderBoard.animate(fade, 500);
@@ -104,10 +108,10 @@ function backToLobby() {
   readyBtn.classList.remove("readyBtnPressed");
   document.getElementById("lobby").style.display = "grid";
   let fade = [
-    {opacity:"1"},
-    {opacity:"0"},
+    { opacity: "1" },
+    { opacity: "0" },
   ];
-  leaderBoard.animate(fade, 500).finished.then(()=>{
+  leaderBoard.animate(fade, 500).finished.then(() => {
     leaderBoard.style.display = "none";
   });
 }
@@ -144,7 +148,7 @@ function findWeapon(name) {
   });
   if (theWeapon !== null) {
     return theWeapon;
-  }else{
+  } else {
     console.log("Could not find weapon:", name);
   }
 }
@@ -163,8 +167,8 @@ function getPlayerFromID(shotID) {
     }
   });
   if (thePlayer !== null) {
-    return thePlayer; 
-  }else{
+    return thePlayer;
+  } else {
     console.log("Could not find player:", name);
     return null;
   }
@@ -194,8 +198,8 @@ function reload() {
     playSound(0);
     RecoilGun.removeClip();
     updateAmmo();
-    setTimeout(()=>{
-      if(gameSettings.dropAmmoOnReload) {
+    setTimeout(() => {
+      if (gameSettings.dropAmmoOnReload) {
         availableRoundsLeft = availableRoundsLeft - currentWeapon.maxLoadedAmmo;
         loadedAmmo = currentWeapon.maxLoadedAmmo;
       } else {
@@ -216,7 +220,7 @@ function reload() {
 function updateAmmo() {
   if (reloading) {
     document.getElementById("ammoDisplayElement").innerHTML = "--/--";
-  }else{
+  } else {
     document.getElementById("ammoDisplayElement").innerHTML = loadedAmmo + "/" + availableRoundsLeft;
   }
 }
@@ -263,8 +267,8 @@ function irEvent(event) {
 }
 
 var hitAnimation = [
-    {opacity:"1"},
-    {opacity:"0"},
+  { opacity: "1" },
+  { opacity: "0" },
 ];
 
 function showHit() {
@@ -279,12 +283,12 @@ function dead(deathInfo) {
   updateDeathScreen();
   document.getElementById("respawnTimer").innerHTML = countdown;
   RecoilGun.removeClip();
-  socket.send(JSON.stringify({"msgType":"kill", "info":deathInfo}));
+  socket.send(JSON.stringify({ "msgType": "kill", "info": deathInfo }));
   stopMap();
   document.getElementById("death").style.display = "block";
   playerState = "dead";
   //setTimeout(respawn, 5000);
-  respawnCountdown = setInterval(()=>{
+  respawnCountdown = setInterval(() => {
     if (countdown <= 1) {
       clearInterval(respawnCountdown);
       respawn();
@@ -310,7 +314,7 @@ function updateDeathScreen() {
   } catch (error) {
     document.getElementById("killedBy").innerHTML = "Unknown";
   }
-  
+
   let killWeapon = "Rick roll";
   weaponDefinitions.forEach((weapon, i) => {
     if (weapon.slotID == death.weapon) {
@@ -331,9 +335,12 @@ function respawn() {
   RecoilGun.loadClip(loadedAmmo);
 }
 
+/**
+ * set the event listeners
+ */
 continueBtn.addEventListener("click", backToLobby);
 readyBtn.addEventListener("click", ready);
-document.getElementById("connectGunbtn").addEventListener("click", ()=>{
+document.getElementById("connectGunbtn").addEventListener("click", () => {
   console.log("Connecting to gun.");
   RecoilGun.connect().then(() => {
     bleSuccess();
@@ -345,7 +352,7 @@ document.getElementById("connectGunbtn").addEventListener("click", ()=>{
     RecoilGun.switchWeapon(2);
     RecoilGun.startTelemetry();
     RecoilGun.updateSettings();
-  }).catch((error)=>{
+  }).catch((error) => {
     console.log("Failure to connect", error);
     bleFailure();
   });

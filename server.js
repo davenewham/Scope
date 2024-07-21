@@ -42,7 +42,7 @@ var game = {
 	settings: null,
 	// settings: {
 	//   startOnReady: true,
-	//   timeMins: 1,
+	//   gameTimeMins: 1,
 	//   preStartCooldown: 5000,
 	//   defaultWeapon: "RK-45",
 	//   startAmmo: "full",
@@ -87,7 +87,7 @@ wss.on("connection", (ws) => {
 			case "join":
 				if (game.state != "waiting") {
 					console.log("Join rejected: Game already in progress");
-					sendToSID(ws.id, JSON.stringify({ msgType: "gameAlreadyStarted" }));
+					player.ws.send(ws.id, JSON.stringify({ msgType: "gameAlreadyStarted" }));
 					break;
 				}
 				if (ws.game) {
@@ -194,8 +194,8 @@ function startGame() {
 				player.ws.send(JSON.stringify({ msgType: "updateGameState", state: "started" }));
 			});
 			let currentTime = new Date();
-			game.gameEnd = new Date(currentTime.getTime() + (60000 * game.settings.timeMins)); // Korrekte Zeitberechnung
-			mainTimer = setTimeout(() => { endGame() }, 60000 * game.settings.timeMins);
+			game.gameEnd = new Date(currentTime.getTime() + (60000 * game.settings.gameTimeMins)); // Korrekte Zeitberechnung
+			mainTimer = setTimeout(() => { endGame() }, 60000 * game.settings.gameTimeMins);
 		}, game.settings.preStartCooldown);
 	} else {
 		console.log("Game already started");
@@ -227,7 +227,7 @@ function handleGameMessage(ws, message) {
 		case "getGameEndTime":
 			if (game.state == "started") {
 				// get remaining battle time
-				sendToSID(ws.id, JSON.stringify({ "msgType": "remainingTime", "time": ws.game.gameEnd }));
+				player.ws.send(ws.id, JSON.stringify({ "msgType": "remainingTime", "time": ws.game.gameEnd }));
 			}
 			break;
 		case "setState":

@@ -16,10 +16,12 @@ var socketCounter = 0;
 
 async function loadConf() {
 	// load game config
-	let defaultSettingsData = await fsp.readFile('config/game/default.json').catch(err => {
-		console.error(err);
-		return;
-	});
+	const defaultSettingsData = await fsp
+    .readFile("config/game/default.jsonc")
+    .catch((err) => {
+      console.error(err);
+      return;
+    });
 	defaultSettings = JSON.parse(stripJsonComments(defaultSettingsData.toString()));
 
 	// Read weapon configs

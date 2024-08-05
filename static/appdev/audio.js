@@ -1,5 +1,7 @@
 var audioContext = new AudioContext();
-var gunSounds = [];
+var gunSounds = {};
+const SOUND_GUNSHOT = "gunshot"
+const SOUND_RELOAD = "reload"
 
 function playSound(sound) {
   var source = audioContext.createBufferSource();
@@ -8,13 +10,13 @@ function playSound(sound) {
   source.start(0);
 }
 
-function loadSound(url) {
+function loadSound(name, url) {
   var request = new XMLHttpRequest();
   request.open('GET', url, true);
   request.responseType = 'arraybuffer';
   request.onload = function() {
     audioContext.decodeAudioData(request.response, function(buffer) {
-      gunSounds.push(buffer);
+      gunSounds[name] = buffer;
     }, (error)=>{console.log(error)});
   }
   request.send();

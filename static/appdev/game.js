@@ -58,8 +58,8 @@ function ready() {
 
 function preGameStart(cooldown) {
   // audio test stuff
-  loadSound("/assets/audio/1911/1911_shot.wav");
-  loadSound("/assets/audio/1911/1911_reload.wav");
+  loadSound(SOUND_GUNSHOT, "/assets/audio/1911/1911_shot.wav");
+  loadSound(SOUND_RELOAD, "/assets/audio/1911/1911_reload.wav");
 
   readyGun();
   document.getElementById("countdown").style.display = "grid";
@@ -195,7 +195,7 @@ function syncIndicators() {
 function reload() {
   if (!reloading) {
     reloading = true;
-    playSound(0);
+    playSound(SOUND_RELOAD);
     RecoilGun.removeClip();
     updateAmmo();
     setTimeout(() => {
@@ -227,7 +227,7 @@ function updateAmmo() {
 function ammoChanged(ammo) {
   if (ammo !== null) {
     if (ammo < loadedAmmo) {
-      playSound(1);
+      playSound(SOUND_GUNSHOT);
     }
     loadedAmmo = ammo;
     updateAmmo();

@@ -33,6 +33,12 @@ function enterFullscreen() {
   fullScreenPermBtn.classList.add("permAllowed");
   checkPerms();
 }
+function fakeEnterFullscreen() {
+  // for debugging on desktop
+  fullscreen = true;
+  fullScreenPermBtn.classList.add("permAllowed");
+  checkPerms();
+}
 function exitFullscreen() {
   document.exitFullscreen();
 }

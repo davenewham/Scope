@@ -21,6 +21,12 @@ window.onload = function() {
   document.getElementById("ftsetup").style.display = "block";
   document.getElementById("setupusername").style.display = "grid";
   fullScreenPermBtn.addEventListener("click", enterFullscreen);
+  window.addEventListener("keydown", (e) => {
+    if (e.key === "f") {
+      fakeEnterFullscreen();
+    }
+  })
+  console.log("press f on desktop to skip fullscreen");
   wakeLockPermBtn.addEventListener("click", setWakeLock);
   locationPermBtn.addEventListener("click", allowGPS);
   document.getElementById("splash").style.display = "none";

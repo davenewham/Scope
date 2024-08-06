@@ -23,10 +23,10 @@ window.onload = function() {
   fullScreenPermBtn.addEventListener("click", enterFullscreen);
   window.addEventListener("keydown", (e) => {
     if (e.key === "f") {
-      fakeEnterFullscreen();
+      fakeFullscreenAndWakeLock();
     }
   })
-  console.log("press f on desktop to skip fullscreen");
+  console.log("press f on desktop to skip to pairing");
   wakeLockPermBtn.addEventListener("click", setWakeLock);
   locationPermBtn.addEventListener("click", allowGPS);
   document.getElementById("splash").style.display = "none";

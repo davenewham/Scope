@@ -224,6 +224,9 @@ function updateAmmo() {
     document.getElementById("ammoDisplayElement").innerHTML = loadedAmmo + "/" + availableRoundsLeft;
   }
 }
+/**
+ * @param {null | number} ammo
+ */
 function ammoChanged(ammo) {
   if (ammo !== null) {
     if (ammo < loadedAmmo) {

@@ -11,17 +11,40 @@ const app = express();
 const serverPort = 3000;
 const useHTTPS = true; // This setting exists for reverse proxy use
 var defaultSettings;
+
+/**
+ * @typedef {Object} weaponDefinition
+ * @property {string} name
+ * @property {string} description
+ * @property {number} slotID
+ * @property {number} damage
+ * @property {number} maxLoadedAmmo
+ * @property {number} maxClips
+ * @property {Object} behavior
+ * @property {number} behavior.triggerMode
+ * @property {number} behavior.rateOfFire
+ * @property {number & (>=0) & (<=254)} behavior.muzzleFlashMode
+ * @property {number} behavior.flashParam1
+ * @property {number} behavior.flashParam2
+ * @property {number & (>=0) & (<=255)} behavior.narrowIrPower
+ * @property {number & (>=0) & (<=255)} behavior.wideIrPower
+ * @property {number & (>=0) & (<=255)} behavior.muzzleLedPower
+ * @property {number} behavior.motorPower
+ */
+/**
+ * @type {weaponDefinition[]}
+ */
 var weaponDefinitions = [];
 var socketCounter = 0;
 
 async function loadConf() {
 	// load game config
 	const defaultSettingsData = await fsp
-    .readFile("config/game/default.jsonc")
-    .catch((err) => {
-      console.error(err);
-      return;
-    });
+		.readFile("config/game/default.jsonc")
+		.catch((err) => {
+			console.error(err);
+			return;
+		});
 	defaultSettings = JSON.parse(stripJsonComments(defaultSettingsData.toString()));
 
 	// Read weapon configs

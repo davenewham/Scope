@@ -24,9 +24,15 @@ var playerList = [];
 
 //Gun
 var reloading = false;
+/**
+ * @type {weaponDefinition}
+ */
 var currentWeapon = {};
 var loadedAmmo = 50;
 var availableRoundsLeft = 20;
+/**
+ * @type {weaponDefinition[]}
+ */
 var weaponDefinitions = [
 ];
 
@@ -139,6 +145,10 @@ function startGun() {
   updateAmmo();
 }
 
+/**
+ * @param {string} name
+ * @returns WeaponDefinition
+ */
 function findWeapon(name) {
   let theWeapon = null;
   weaponDefinitions.forEach((weapon, i) => {

@@ -6,7 +6,7 @@ var respawnCountdown = null;
 var gameTimer = null;
 var secondsLeft = 0;
 var gameSettings = {};
-let endTime;
+let gameEndTime;
 
 // Player
 var playerSettings = {
@@ -71,7 +71,7 @@ function ready() {
   }
 }
 
-function preGameStart(cooldown, gameEndTime) {
+function preGameStart(cooldown, serverEndTime) {
   // audio test stuff
   loadSound("/assets/audio/1911/1911_shot.wav");
   loadSound("/assets/audio/1911/1911_reload.wav");
@@ -83,7 +83,7 @@ function preGameStart(cooldown, gameEndTime) {
   document.getElementById("startCountdownNumber").innerHTML = countdown;
   startCountdown = setInterval(() => {
     if (countdown <= 1) {
-      startGame(startTime);
+      startGame(serverEndTime);
       clearInterval(startCountdown);
       document.getElementById("countdown").style.display = "none";
     } else {
@@ -95,7 +95,7 @@ function preGameStart(cooldown, gameEndTime) {
 }
 
 function startGame(serverEndTime) {
-  endTime = serverEndTime;
+  gameEndTime = serverEndTime;
   startGun();
   console.log("Game Started");
   secondsLeft = gameSettings.gameTimeMins * 60;

@@ -246,7 +246,7 @@ function irEvent(event) {
     if (playerHealth <= 0) {
       // Player is dead
       const deathInfo = {
-        shooterID,
+        shooterID: shooterID,
         weapon: weaponID,
         time: new Date()
       };

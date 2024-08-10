@@ -6,11 +6,12 @@ var respawnCountdown = null;
 var gameTimer = null;
 var secondsLeft = 0;
 var gameSettings = {};
+let serverTimeOffset = 0
 
 // Player
 var playerSettings = {
-  vibrateOnHit:true,
-  recoil:false,
+  vibrateOnHit: true,
+  recoil: false,
 };
 var playerGameData = {};
 var playerHealth = 100;
@@ -60,17 +61,17 @@ function lobbyUpdated(players) {
     lobbyRoster.appendChild(container);
   });
 }
-function ready () {
+function ready() {
   if (readyBtn.classList.contains("readyBtnPressed")) {
     readyBtn.classList.remove("readyBtnPressed");
-    socket.send(JSON.stringify({'msgType':'setState', 'state':'lobby'}));
+    socket.send(JSON.stringify({ 'msgType': 'setState', 'state': 'lobby' }));
   } else {
     readyBtn.classList.add("readyBtnPressed");
-    socket.send(JSON.stringify({'msgType':'setState', 'state':'ready'}));
+    socket.send(JSON.stringify({ 'msgType': 'setState', 'state': 'ready' }));
   }
 }
 
-function preGameStart(cooldown) {
+function preGameStart(cooldown, startTime) {
   // audio test stuff
   loadSound("/assets/audio/1911/1911_shot.wav");
   loadSound("/assets/audio/1911/1911_reload.wav");
@@ -80,9 +81,9 @@ function preGameStart(cooldown) {
   document.getElementById("lobby").style.display = "none";
   let countdown = cooldown / 1000;
   document.getElementById("startCountdownNumber").innerHTML = countdown;
-  startCountdown = setInterval(()=>{
+  startCountdown = setInterval(() => {
     if (countdown <= 1) {
-      startGame();
+      startGame(startTime);
       clearInterval(startCountdown);
       document.getElementById("countdown").style.display = "none";
     } else {
@@ -93,7 +94,11 @@ function preGameStart(cooldown) {
   //show countdown stuff hide all setup stuff
 }
 
-function startGame () {
+function startGame(serverStartTime) {
+  // Store deviation - we need this to be accurate across multiple clients
+  // naive assumption that each client has a ping <1000ms.
+  syncTimeFromServer(serverStartTime);
+  
   startGun();
   console.log("Game Started");
   secondsLeft = gameSettings.gameTimeMins * 60;
@@ -101,6 +106,11 @@ function startGame () {
   gameTimer = setInterval(timer, 1000);
   syncIndicators();
   startMap();
+}
+
+function syncTimeFromServer(serverTime) {
+  const localTime = Date.now();
+  serverTimeOffset = localTime - serverTime;
 }
 
 function endGame() {
@@ -153,16 +163,18 @@ function getPlayerFromID(shotID) {
   });
   if (thePlayer !== null) {
     return thePlayer;
-  }else{
+  } else {
     console.log("Could not find player:", name);
   }
 }
 
 function timer() {
-  secondsLeft = secondsLeft - 1;
-  let mins = Math.floor(secondsLeft / 60);
-  let seconds = secondsLeft % 60;
-  let clock = mins.toString() + ":" + seconds.toString();
+  const adjustedTime = Date.now() - serverTimeOffset;
+  secondsLeft = secondsLeft - serverTimeOffset;
+
+  const mins = Math.floor(secondsLeft / 60);
+  const seconds = secondsLeft % 60;
+  const clock = mins.toString() + ":" + seconds.toString();
   document.getElementById("gameTimerElement").innerHTML = clock;
   if (secondsLeft <= 0) {
     endGame();

@@ -179,6 +179,7 @@ function startGame() {
         msgType: "updateGameState",
         state: "starting",
         cooldown: gameSettings.preStartCooldown,
+        startTime: Date.now()
       })
     );
     setTimeout(() => {

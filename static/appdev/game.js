@@ -177,6 +177,11 @@ function syncIndicators() {
 }
 
 function reload() {
+  if (playerState === "dead") {
+    // dead players can't shoot :^)
+    return;
+  }
+
   if (!reloading) {
     reloading = true;
     playSound(0);
@@ -224,25 +229,27 @@ function updateHealth() {
   document.getElementById("healthBar").value = playerHealth;
 }
 
-function irEvent(event) {
-  if (playerState == "alive") {
-    showHit();
-    let damage = 0;
-    weaponDefinitions.forEach((weapon, i) => {
-      if (weapon.slotID == event.weaponID) {
-        damage = weapon.damage;
-      }
-    });
-    playerHealth = playerHealth - damage;
-    updateHealth();
-    if (playerHealth <= 0) {
-      let deathInfo = {};
-      deathInfo.shooterID = event.shooterID;
-      deathInfo.weapon = event.weaponID;
-      deathInfo.time = new Date();
-      deathList.push(deathInfo);
-      dead(deathInfo);
+function irEvent(event) { 
+  if (playerState === "dead") {
+    return;
+  }
+  
+  showHit();
+  let damage = 0;
+  weaponDefinitions.forEach((weapon, i) => {
+    if (weapon.slotID == event.weaponID) {
+      damage = weapon.damage;
     }
+  });
+  playerHealth = playerHealth - damage;
+  updateHealth();
+  if (playerHealth <= 0) {
+    let deathInfo = {};
+    deathInfo.shooterID = event.shooterID;
+    deathInfo.weapon = event.weaponID;
+    deathInfo.time = new Date();
+    deathList.push(deathInfo);
+    dead(deathInfo);
   }
 }
 

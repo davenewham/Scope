@@ -7,7 +7,7 @@ socket.onmessage = function(event) {
     lobbyUpdated(message.players);
   } else if (message.msgType == 'updateGameState') {
     if (message.state == "starting") {
-      preGameStart(message.cooldown, message.startTime);
+      preGameStart(message.cooldown, message.gameEndTime);
     }
   } else if (message.msgType == 'updateGameSettings') {
     gameSettings = message.settings;

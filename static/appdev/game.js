@@ -6,7 +6,7 @@ var respawnCountdown = null;
 var gameTimer = null;
 var secondsLeft = 0;
 var gameSettings = {};
-let serverTimeOffset = 0
+let endTime;
 
 // Player
 var playerSettings = {
@@ -32,7 +32,7 @@ var weaponDefinitions = [
 
 
 readyBtn.addEventListener("click", ready);
-document.getElementById("connectGunbtn").addEventListener("click", ()=>{
+document.getElementById("connectGunbtn").addEventListener("click", () => {
   console.log("Connecting to gun.");
   RecoilGun.connect().then(() => {
     bleSuccess();
@@ -43,7 +43,7 @@ document.getElementById("connectGunbtn").addEventListener("click", ()=>{
     RecoilGun.on("reloadBtn", reload);
     RecoilGun.switchWeapon(2);
     RecoilGun.startTelemetry();
-  }).catch((error)=>{
+  }).catch((error) => {
     console.log("Failure to connect", error);
     bleFailure();
   });
@@ -71,7 +71,7 @@ function ready() {
   }
 }
 
-function preGameStart(cooldown, startTime) {
+function preGameStart(cooldown, gameEndTime) {
   // audio test stuff
   loadSound("/assets/audio/1911/1911_shot.wav");
   loadSound("/assets/audio/1911/1911_reload.wav");
@@ -94,11 +94,8 @@ function preGameStart(cooldown, startTime) {
   //show countdown stuff hide all setup stuff
 }
 
-function startGame(serverStartTime) {
-  // Store deviation - we need this to be accurate across multiple clients
-  // naive assumption that each client has a ping <1000ms.
-  syncTimeFromServer(serverStartTime);
-  
+function startGame(serverEndTime) {
+  endTime = serverEndTime;
   startGun();
   console.log("Game Started");
   secondsLeft = gameSettings.gameTimeMins * 60;
@@ -106,11 +103,6 @@ function startGame(serverStartTime) {
   gameTimer = setInterval(timer, 1000);
   syncIndicators();
   startMap();
-}
-
-function syncTimeFromServer(serverTime) {
-  const localTime = Date.now();
-  serverTimeOffset = localTime - serverTime;
 }
 
 function endGame() {
@@ -169,8 +161,7 @@ function getPlayerFromID(shotID) {
 }
 
 function timer() {
-  const adjustedTime = Date.now() - serverTimeOffset;
-  secondsLeft = secondsLeft - serverTimeOffset;
+  const secondsLeft = Math.floor((endTime - Date.now()) / 1000);
 
   const mins = Math.floor(secondsLeft / 60);
   const seconds = secondsLeft % 60;

@@ -164,6 +164,8 @@ function allPlayersReady() {
 
 function startGame() {
   if (game.state == "waiting") {
+    const gameStartTime = new Date();
+    const gameEndTime = new Date(gameStartTime.getDate() + (60000 * gameSettings.gameTimeMins));
     console.log("Starting Game...");
     game.state = "starting";
     assignPlayersGunIDs();
@@ -179,7 +181,7 @@ function startGame() {
         msgType: "updateGameState",
         state: "starting",
         cooldown: gameSettings.preStartCooldown,
-        startTime: Date.now()
+        gameEndTime: gameEndTime
       })
     );
     setTimeout(() => {
@@ -187,8 +189,6 @@ function startGame() {
       broadcast(
         JSON.stringify({ msgType: "updateGameState", state: "started" })
       );
-      let currentTime = new Date();
-      gameEndTime = new Date(currentTime.getDate() + (60000 * gameSettings.gameTimeMins));
       mainTimer = setTimeout(endGame, 60000 * gameSettings.gameTimeMins);
     }, gameSettings.preStartCooldown);
   } else {

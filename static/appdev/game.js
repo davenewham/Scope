@@ -229,27 +229,30 @@ function updateHealth() {
   document.getElementById("healthBar").value = playerHealth;
 }
 
-function irEvent(event) { 
+function irEvent(event) {
   if (playerState === "dead") {
     return;
   }
-  
-  showHit();
-  let damage = 0;
-  weaponDefinitions.forEach((weapon, i) => {
-    if (weapon.slotID == event.weaponID) {
-      damage = weapon.damage;
+
+  const { weaponID, shooterID } = event;
+  const weapon = weaponDefinitions.find(w => w.slotID === weaponID);
+  const damage = weapon ? weapon.damage : 0;
+
+  if (damage > 0) {
+    showHit();
+    playerHealth = playerHealth - damage;
+    updateHealth();
+
+    if (playerHealth <= 0) {
+      // Player is dead
+      const deathInfo = {
+        shooterID,
+        weapon: weaponID,
+        time: new Date()
+      };
+      deathList.push(deathInfo);
+      dead(deathInfo);
     }
-  });
-  playerHealth = playerHealth - damage;
-  updateHealth();
-  if (playerHealth <= 0) {
-    let deathInfo = {};
-    deathInfo.shooterID = event.shooterID;
-    deathInfo.weapon = event.weaponID;
-    deathInfo.time = new Date();
-    deathList.push(deathInfo);
-    dead(deathInfo);
   }
 }
 

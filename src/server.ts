@@ -1,4 +1,4 @@
-import WebSocket from "ws";
+import WebSocket, { WebSocketServer } from 'ws';
 import express from "express";
 import * as fsp from "fs/promises";
 import * as fs from "fs";
@@ -65,7 +65,7 @@ const httpServer = https.createServer(
 	express()
 );
 
-const wss = new WebSocket.Server({ server: httpServer });
+const wss: WebSocketServer = new WebSocket.Server({ server: httpServer });
 httpServer.listen(serverPort, () => {
 	console.log("Server listening at https://localhost:3000/");
 });

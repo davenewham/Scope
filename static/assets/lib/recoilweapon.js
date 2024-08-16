@@ -259,7 +259,7 @@
       if (telemetry.buttonCount.trigger != lastButtonCount.trigger) {
         if (this._EVENTS["triggerBtn"]) {
           this._EVENTS["triggerBtn"](telemetry.buttonCount.trigger);
-        }
+      }
       }
       if (telemetry.buttonCount.reload != lastButtonCount.reload) {
         if (this._EVENTS["reloadBtn"]) {

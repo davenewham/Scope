@@ -1,5 +1,4 @@
-console.log("wss://" + window.location.host + ":3000/api")
-var socket = new window.WebSocket("wss://" + window.location.host + "/api");
+const socket = new window.WebSocket("wss://" + window.location.host + "/api");
 
 socket.onmessage = function (event) {
   console.log("WebSocket message received:", event.data);

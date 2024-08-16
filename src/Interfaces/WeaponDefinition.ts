@@ -1,38 +1,11 @@
+import { WeaponBehaviour } from "./WeaponBehaviour";
+
 export interface WeaponDefinition {
-    /**
-     * 
-     */
-    triggerMode: number;
-    /**
-     * 
-     */
-    rateOfFire: number;
-    /**
-     * 
-     */
-    muzzleFlashMode: number;
-    /**
-     * 
-     */
-    flashParam1: number;
-    /**
-     * 
-     */
-    flashParam2: number;
-    /**
-     * 
-     */
-    narrowIrPower: number;
-    /**
-     * 
-     */
-    wideIrPower: number;
-    /**
-    * 
-    */
-    muzzleLedPower: number;
-    /**
-    * 
-    */
-    motorPower: number;
+    name: string;
+    description: string;
+    slotID: number;
+    damage: number;
+    maxLoadedAmmo: number;
+    maxClips: number;
+    behaviour: WeaponBehaviour;
 }

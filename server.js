@@ -7,9 +7,7 @@ var http = require("http");
 const stripJsonComments = require("strip-json-comments");
 var colors = require('@colors/colors');
 
-const app = express();
 const serverPort = 3000;
-const useHTTPS = true; // This setting exists for reverse proxy use
 var defaultSettings;
 
 /**
@@ -82,23 +80,17 @@ loadConf().then(() => {
 game.id = makeUID(6);
 console.log(("Game id: " + game.id).green);
 
-app.use("/", express.static("static/appdev"));
-app.use(express.static("static"));
-var httpServer;
-if (useHTTPS) {
-	httpServer = https.createServer(
-		{
-			key: fs.readFileSync("certs/server.key"),
-			cert: fs.readFileSync("certs/server.cert"),
-		},
-		app
-	);
-} else {
-	httpServer = http.createServer(app);
-}
+const httpServer = https.createServer(
+	{
+		key: fs.readFileSync("certs/server.key"),
+		cert: fs.readFileSync("certs/server.cert"),
+	},
+	express()
+);
+
 const wss = new WebSocket.Server({ server: httpServer });
 httpServer.listen(serverPort, () => {
-	console.log("Listening at https://localhost:3000/".yellow);
+	console.log("Server listening at https://localhost:3000/".yellow);
 });
 
 wss.on("connection", (ws) => {

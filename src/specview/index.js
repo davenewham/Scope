@@ -1,6 +1,6 @@
-var canvas = document.getElementById("canvas");
-var context = canvas.getContext("2d");
-var mapImage = new Image();
+let canvas = document.getElementById("canvas");
+let context = canvas.getContext("2d");
+let mapImage = new Image();
 mapImage.src = "/assets/imgs/map.png";
 window.onload = () => {
   canvas.width = window.innerWidth;
@@ -12,19 +12,19 @@ window.onresize = () => {
   canvas.height = window.innerHeight;
 };
 
-var input1 = document.getElementById("slider1");
-var input2 = document.getElementById("slider2");
-var input3 = document.getElementById("slider3");
-var input4 = document.getElementById("slider4");
+let input1 = document.getElementById("slider1");
+let input2 = document.getElementById("slider2");
+let input3 = document.getElementById("slider3");
+let input4 = document.getElementById("slider4");
 let mapWidth = 0;
 let mapHeight = 0;
-var rotation = 0;
-var scale = 300;
-var x = 50;
-var y = 50;
+let rotation = 0;
+let scale = 300;
+let x = 50;
+let y = 50;
 
-var testCord = 0;
-var testCordOther = 0;
+let testCord = 0;
+let testCordOther = 0;
 
 function draw() {
   rotation = rotation + ((((input1.value-rotation)%360)+540)%360-180) / 15
@@ -48,11 +48,11 @@ function draw() {
   let mappedY = mapHeight * (y / 100);
   let mappedX = mapWidth * (x / 100);
   context.translate(canvas.width / 2, canvas.height / 2); // Set context to center
-  var angle = Math.atan(mappedY / mappedX);
-  var magnitude = Math.sqrt(Math.pow(mappedY, 2) + Math.pow(mappedX, 2)); // Get the hypotinuse thingy
-  var finalAngle = angle + toRadians(rotation);
-  var finalx = Math.sin(finalAngle) * magnitude;
-  var finaly = Math.cos(finalAngle) * magnitude;
+  let angle = Math.atan(mappedY / mappedX);
+  let magnitude = Math.sqrt(Math.pow(mappedY, 2) + Math.pow(mappedX, 2)); // Get the hypotinuse thingy
+  let finalAngle = angle + toRadians(rotation);
+  let finalx = Math.sin(finalAngle) * magnitude;
+  let finaly = Math.cos(finalAngle) * magnitude;
   context.translate(0 - finaly, 0 - finalx);
   context.rotate(toRadians(rotation));
   context.save();

@@ -1,8 +1,8 @@
-var canvas = document.getElementById("mainCanvas");
-var mapParent = document.getElementById("mapContainer");
-var context = canvas.getContext("2d");
-var mapImage = new Image();
-var positionWatcher = null;
+let canvas = document.getElementById("mainCanvas");
+let mapParent = document.getElementById("mapContainer");
+let context = canvas.getContext("2d");
+let mapImage = new Image();
+let positionWatcher = null;
 mapImage.src = "/assets/imgs/map.png";
 window.onload = () => {
   canvas.width = mapParent.clientWidth;
@@ -13,17 +13,17 @@ window.onload = () => {
 //   canvas.height = mapParent.clientHeight;
 // };
 
-var sensor = new AbsoluteOrientationSensor();
+let sensor = new AbsoluteOrientationSensor();
 sensor.addEventListener("reading", (e) => handleSensor(e));
 
-var rotation = 0;
-var scale = 300;
-var currentX = 50;
-var currentY = 50;
-var inputX = 0;
-var inputY = 0;
-var mapEnable = true;
-var heading = 0;
+let rotation = 0;
+let scale = 300;
+let currentX = 50;
+let currentY = 50;
+let inputX = 0;
+let inputY = 0;
+let mapEnable = true;
+let heading = 0;
 
 function draw() {
   rotation = rotation + (((((0-heading)-rotation)%360)+540)%360-180) / 15
@@ -47,11 +47,11 @@ function draw() {
   let mappedY = mapHeight * (currentY / 100);
   let mappedX = mapWidth * (currentX / 100);
   context.translate(canvas.width / 2, canvas.height / 2); // Set context to center
-  var angle = Math.atan(mappedY / mappedX);
-  var magnitude = Math.sqrt(Math.pow(mappedY, 2) + Math.pow(mappedX, 2)); // Get the hypotinuse thingy
-  var finalAngle = angle + toRadians(rotation);
-  var finalx = Math.sin(finalAngle) * magnitude;
-  var finaly = Math.cos(finalAngle) * magnitude;
+  let angle = Math.atan(mappedY / mappedX);
+  let magnitude = Math.sqrt(Math.pow(mappedY, 2) + Math.pow(mappedX, 2)); // Get the hypotinuse thingy
+  let finalAngle = angle + toRadians(rotation);
+  let finalx = Math.sin(finalAngle) * magnitude;
+  let finaly = Math.cos(finalAngle) * magnitude;
   context.translate(0 - finaly, 0 - finalx);
   context.rotate(toRadians(rotation));
   context.save();
@@ -103,22 +103,22 @@ function posChanged(position) {
 
 function compassHeading(alpha, beta, gamma) {
   // Convert degrees to radians
-  var alphaRad = alpha * (Math.PI / 180);
-  var betaRad = beta * (Math.PI / 180);
-  var gammaRad = gamma * (Math.PI / 180);
+  let alphaRad = alpha * (Math.PI / 180);
+  let betaRad = beta * (Math.PI / 180);
+  let gammaRad = gamma * (Math.PI / 180);
   // Calculate equation components
-  var cA = Math.cos(alphaRad);
-  var sA = Math.sin(alphaRad);
-  var cB = Math.cos(betaRad);
-  var sB = Math.sin(betaRad);
-  var cG = Math.cos(gammaRad);
-  var sG = Math.sin(gammaRad);
+  let cA = Math.cos(alphaRad);
+  let sA = Math.sin(alphaRad);
+  let cB = Math.cos(betaRad);
+  let sB = Math.sin(betaRad);
+  let cG = Math.cos(gammaRad);
+  let sG = Math.sin(gammaRad);
   // Calculate A, B, C rotation components
-  var rA = - cA * sG - sA * sB * cG;
-  var rB = - sA * sG + cA * sB * cG;
-  var rC = - cB * cG;
+  let rA = - cA * sG - sA * sB * cG;
+  let rB = - sA * sG + cA * sB * cG;
+  let rC = - cB * cG;
   // Calculate compass heading
-  var compassHeading = Math.atan(rA / rB);
+  let compassHeading = Math.atan(rA / rB);
   // Convert from half unit circle to whole unit circle
   if(rB < 0) {
     compassHeading += Math.PI;

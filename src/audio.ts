@@ -2,7 +2,7 @@
 
 type Sound = "gunshot" | "reload"
 
-var audioContext: AudioContext = null;
+let audioContext: AudioContext = null;
 const gunSounds: Record<Sound, AudioBuffer | null> = {
   gunshot: null,
   reload: null,

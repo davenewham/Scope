@@ -1,39 +1,39 @@
 // Game
-var lobbyRoster = document.getElementById("roster");
-var readyBtn = document.getElementById("readyBtn");
-var leaderBoard = document.getElementById("leaderboard");
-var continueBtn = document.getElementById("continueButton");
-var startCountdown = null;
-var respawnCountdown = null;
-var gameTimer = null;
-var secondsLeft = 0;
-var gameSettings = {};
+let lobbyRoster = document.getElementById("roster");
+let readyBtn = document.getElementById("readyBtn");
+let leaderBoard = document.getElementById("leaderboard");
+let continueBtn = document.getElementById("continueButton");
+let startCountdown = null;
+let respawnCountdown = null;
+let gameTimer = null;
+let secondsLeft = 0;
+let gameSettings = {};
 
 // Player
-var playerSettings = {
+let playerSettings = {
   vibrateOnHit: true,
   recoil: true,
 };
-var playerGameData = {};
-var playerHealth = 100;
-var playerState = "alive";
-var playerInv = {};
-var deathList = [];
-var kills = 0;
-var playerList = [];
+let playerGameData = {};
+let playerHealth = 100;
+let playerState = "alive";
+let playerInv = {};
+let deathList = [];
+let kills = 0;
+let playerList = [];
 
 //Gun
-var reloading = false;
+let reloading = false;
 /**
  * @type {weaponDefinition}
  */
-var currentWeapon = {};
-var loadedAmmo = 50;
-var availableRoundsLeft = 20;
+let currentWeapon = {};
+let loadedAmmo = 50;
+let availableRoundsLeft = 20;
 /**
  * @type {weaponDefinition[]}
  */
-var weaponDefinitions = [
+let weaponDefinitions = [
 ];
 
 //Lobby stuff
@@ -279,7 +279,7 @@ function irEvent(event) {
   }
 }
 
-var hitAnimation = [
+let hitAnimation = [
   { opacity: "1" },
   { opacity: "0" },
 ];

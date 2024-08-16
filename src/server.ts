@@ -1,14 +1,13 @@
-import WebSocket, { WebSocketServer } from "ws";
+import WebSocket from "ws";
 import express from "express";
 import * as fsp from "fs/promises";
 import * as fs from "fs";
-import https from "https";
+import * as https from "https";
 import stripJsonComments from "strip-json-comments";
-import colors from "@colors/colors";
 
-import { WeaponDefinition } from "./src/Interfaces/WeaponDefinition";
-import { Game } from "./src/Interfaces/Game";
-import { Player } from "./src/Interfaces/Player";
+import { WeaponDefinition } from "./Interfaces/WeaponDefinition";
+import { Game } from "./Interfaces/Game";
+import { Player } from "./Interfaces/Player";
 
 const serverPort = 3000;
 let defaultSettings;
@@ -39,7 +38,7 @@ async function loadConf() {
 	try {
 		const files = await fsp.readdir('config/weapon');
 		for (const file of files) {
-			console.log(colors.yellow("Found weapon config" + file));
+			console.log(("Found weapon config" + file));
 			try {
 				const data = await fsp.readFile('config/weapon/' + file, "utf-8")
 				weaponDefinitions.push(JSON.parse(stripJsonComments(data.toString())));
@@ -56,7 +55,7 @@ async function loadConf() {
 loadConf().then(() => {
 	game.settings = defaultSettings;
 });
-console.log(("Game id: " + game.id).green);
+console.log(("Game id: " + game.id));
 
 const httpServer = https.createServer(
 	{
@@ -68,7 +67,7 @@ const httpServer = https.createServer(
 
 const wss = new WebSocket.Server({ server: httpServer });
 httpServer.listen(serverPort, () => {
-	console.log("Server listening at https://localhost:3000/".yellow);
+	console.log("Server listening at https://localhost:3000/");
 });
 
 function handleJoin(ws: WebSocket & { id?: number; game?: Game; player?: Player }, command: any) {
@@ -102,6 +101,7 @@ wss.on("connection", (ws: WebSocket) => {
 		switch (command.msgType) {
 			case "join":
 				handleJoin(ws, command);
+				break;
 			case "reconnect":
 				if (ws.game) {
 					console.log("Player is already connected");

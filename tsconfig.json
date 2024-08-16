@@ -11,7 +11,7 @@
     "noEmit": false,
     "isolatedModules": true,
     "moduleDetection": "force",
-    "outDir": "./dist",
+    "outDir": "./build",
     "noUnusedLocals": true,
     "noFallthroughCasesInSwitch": true
   },

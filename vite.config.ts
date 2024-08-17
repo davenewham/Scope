@@ -15,7 +15,13 @@ export default defineConfig({
         secure: false,
         ws: true
       }
-
-    }
+    },
   },
+  // build: {
+  //   rollupOptions: {
+  //     input: {
+  //       main: 'public/pages/index.html',
+  //     },
+  //   },
+  // },
 })

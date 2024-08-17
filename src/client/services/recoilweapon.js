@@ -52,6 +52,7 @@
     }
 
     connect() {
+      console.log("connecting")
       return new Promise(async (resolve, reject) => {
         this._queue(() => this._connect().then(()=>resolve()).catch(()=>reject()));
       });
@@ -96,6 +97,7 @@
           this.isConnected = true;
           resolve();
         } catch (e) {
+          console.log(e)
           reject(e);
         }
       });

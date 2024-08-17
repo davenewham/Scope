@@ -9,7 +9,7 @@
     "dev": "tsc && concurrently \"npm:run\" \"npm:run:server\"",
     "build": "tsc && vite build",
     "run": "vite",
-    "run:server": "node build/server.js"
+    "run:server": "node build/server/server.js"
   },
   "author": "Zach Groening",
   "license": "MIT",

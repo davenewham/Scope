@@ -5,9 +5,9 @@ import * as fs from "fs";
 import * as https from "https";
 import stripJsonComments from "strip-json-comments";
 
-import { WeaponDefinition } from "./Interfaces/WeaponDefinition";
-import { Game } from "./Interfaces/Game";
-import { Player } from "./Interfaces/Player";
+import { WeaponDefinition } from "../interfaces/WeaponDefinition";
+import { Game } from "../interfaces/Game";
+import { Player } from "../interfaces/Player";
 
 const serverPort = 3000;
 let defaultSettings;

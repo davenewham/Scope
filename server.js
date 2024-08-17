@@ -276,23 +276,27 @@ function handleGameMessage(ws, message) {
 			startGame();
 			break;
 		case "kill":
+			/*
+			message.info includes attributes: shooterID, shooterName, killedName, weapon, time
+			 */
 			let killer = ws.game.players.find(player => {
 				console.log('== Try to match the shooter id with a player ==')
-				console.log("player.gunID");
-				console.log(player.gunID);
+				console.log(`player.username: ${player.username}`);
+				console.log(`message.info.shooterName: ${message.info.shooterName}`)
 
-				console.log("message.info.shooterID:");
-				console.log(message.info.shooterID);
-
-				return player.gunID == message.info.shooterID;
+				return player.username == message.info.shooterName;
 			});
 
 			try {
-				killer.ws.send(killer, JSON.stringify({ "msgType": "kill" }));
+				let killmsg = {
+					msgType: "kill",
+					killed: message.info.killedName,
+					weapon: message.info.weaponID
+				}
+				killer.ws.send(JSON.stringify(killmsg));
 			} catch (error) {
-				console.log("Failed to set killer");
-				console.log("killer:");
-				console.log(killer); // wasn't defined
+				console.log(`Failed to set killer due to ${error}`);
+				console.log(`killer: ${killer}`);
 			}
 			break;
 	}

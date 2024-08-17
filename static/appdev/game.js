@@ -277,14 +277,15 @@ function irEvent(event) {
     updateHealth();
 
     if (playerHealth <= 0) {
-      // Player is dead
-      const deathInfo = {
-        shooterID: shooterID,
-        weapon: weaponID,
-        time: new Date()
-      };
-      deathList.push(deathInfo);
-      dead(deathInfo);
+      let deathInfo = {
+          shooterID: event.shooterID,
+          shooterName: getPlayerFromID(event.shooterID).username,
+          killedName: username,
+          weapon: event.weaponID,
+          time: new Date()
+      }
+        deathList.push(deathInfo);
+        dead(deathInfo);
     }
   }
 }

@@ -203,6 +203,11 @@ function syncIndicators() {
 }
 
 function reload() {
+  if (playerState === "dead") {
+    // dead players can't shoot :^)
+    return;
+  }
+
   if (!reloading) {
     reloading = true;
     playSound(SOUND_RELOAD);
@@ -258,21 +263,26 @@ function updateHealth() {
 }
 
 function irEvent(event) {
-  if (playerState == "alive") {
+  if (playerState === "dead") {
+    return;
+  }
+
+  const { weaponID, shooterID } = event;
+  const weapon = weaponDefinitions.find(w => w.slotID === weaponID);
+  const damage = weapon ? weapon.damage : 0;
+
+  if (damage > 0) {
     showHit();
-    let damage = 0;
-    weaponDefinitions.forEach((weapon, i) => {
-      if (weapon.slotID == event.weaponID) {
-        damage = weapon.damage;
-      }
-    });
     playerHealth = playerHealth - damage;
     updateHealth();
+
     if (playerHealth <= 0) {
-      let deathInfo = {};
-      deathInfo.shooterID = event.shooterID;
-      deathInfo.weapon = event.weaponID;
-      deathInfo.time = new Date();
+      // Player is dead
+      const deathInfo = {
+        shooterID: shooterID,
+        weapon: weaponID,
+        time: new Date()
+      };
       deathList.push(deathInfo);
       dead(deathInfo);
     }

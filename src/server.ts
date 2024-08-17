@@ -194,7 +194,7 @@ function startGame() {
 			});
 			const currentTime = new Date();
 			game.gameEnd = new Date(currentTime.getTime() + (60000 * game.settings!.gameTimeMins)); // Korrekte Zeitberechnung
-			game.timer(setTimeout(() => { endGame() }, 60000 * game.settings!.gameTimeMins));
+			game.timer = setTimeout(() => { endGame() }, 60000 * game.settings!.gameTimeMins);
 		}, game.settings!.preStartCooldown);
 	} else {
 		console.log("Game already started");

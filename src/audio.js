@@ -1,36 +1,40 @@
-// todo: turn this into a class
+var audioContext = null;
+var gunSounds = {};
+const SOUND_GUNSHOT = "gunshot"
+const SOUND_RELOAD = "reload"
+/**
+ * @typedef {SOUND_GUNSHOT | SOUND_RELOAD} Sound
+ */
 
-type Sound = "gunshot" | "reload"
-
-let audioContext: AudioContext = null;
-const gunSounds: Record<Sound, AudioBuffer | null> = {
-  gunshot: null,
-  reload: null,
-};
-
-function ensureAudioContext(): void {
+function ensureAudioContext() {
   // only load the audioContext after user interaction, otherwise we won't get one.
   if (audioContext === null) {
     audioContext = new AudioContext();
   }
 }
 
-function playSound(sound: Sound) {
+/**
+ * @param {Sound} sound
+ */
+function playSound(sound) {
   ensureAudioContext();
-
-  const source = audioContext!.createBufferSource();
+  var source = audioContext.createBufferSource();
   source.buffer = gunSounds[sound];
   source.connect(audioContext.destination);
   source.start(0);
 }
 
-function loadSound(name: Sound, url: string): void {
+/**
+ * @param {Sound} name
+ * @param {string} url
+ */
+function loadSound(name, url) {
   ensureAudioContext();
-  const request = new XMLHttpRequest();
+  var request = new XMLHttpRequest();
   request.open('GET', url, true);
   request.responseType = 'arraybuffer';
   request.onload = function () {
-    audioContext!.decodeAudioData(request.response, function (buffer) {
+    audioContext.decodeAudioData(request.response, function (buffer) {
       gunSounds[name] = buffer;
     }, (error) => { console.log(error) });
   }

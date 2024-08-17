@@ -64,8 +64,8 @@ function ready() {
 
 function preGameStart(cooldown) {
   // audio test stuff
-  loadSound(SOUND_GUNSHOT, "/assets/audio/1911/1911_shot.wav");
-  loadSound(SOUND_RELOAD, "/assets/audio/1911/1911_reload.wav");
+  loadSound(SOUND_GUNSHOT, "/audio/1911/1911_shot.wav");
+  loadSound(SOUND_RELOAD, "/audio/1911/1911_reload.wav");
 
   readyGun();
   document.getElementById("countdown").style.display = "grid";

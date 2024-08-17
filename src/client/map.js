@@ -1,9 +1,9 @@
-let canvas = document.getElementById("mainCanvas");
-let mapParent = document.getElementById("mapContainer");
-let context = canvas.getContext("2d");
-let mapImage = new Image();
-let positionWatcher = null;
-mapImage.src = "/assets/imgs/map.png";
+var canvas = document.getElementById("mainCanvas");
+var mapParent = document.getElementById("mapContainer");
+var context = canvas.getContext("2d");
+var mapImage = new Image();
+var positionWatcher = null;
+mapImage.src = "/public/imgs/map.png";
 window.onload = () => {
   canvas.width = mapParent.clientWidth;
   canvas.height = mapParent.clientHeight;

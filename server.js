@@ -178,10 +178,10 @@ wss.on("connection", (ws) => {
 });
 
 function assignPlayersGunIDs(players) {
-	let counter = 0;
+	let counter = 1; // Do not give anyone 0!
 	players.forEach(player => {
-		player.gunID = counter++;
 		player.ws.send(JSON.stringify({ msgType: "assignGunID", GunID: counter }));
+		player.gunID = counter++;
 	});
 }
 

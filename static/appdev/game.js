@@ -125,6 +125,8 @@ function backToLobby() {
 function readyGun() {
   currentWeapon = findWeapon(gameSettings.defaultWeapon);
   RecoilGun.gunSettings.shotId = playerGameData.gunID;
+  // Let the gun know we want this ID!
+  RecoilGun.setGunId(playerGameData.gunID);
   RecoilGun.gunSettings.recoil = playerSettings.recoil;
   RecoilGun.updateSettings();
   weaponDefinitions.forEach((weapon, i) => {
@@ -164,24 +166,9 @@ function findWeapon(name) {
 }
 
 function getPlayerFromID(shotID) {
-  console.log("Shots fired. Shot ID:");
-  console.log(shotID);
-
-  // workaround test: substract one from the shotID
-  shotID = shotID - 1;
-
-  let thePlayer = null;
-  playerList.forEach((player, i) => {
-    if (player.gunID == shotID) {
-      thePlayer = player;
-    }
-  });
-  if (thePlayer !== null) {
-    return thePlayer;
-  } else {
-    console.log("Could not find player:", name);
-    return null;
-  }
+  console.debug("Receieved shot from Shot ID:", shotID, "checking current playerlist", playerList);
+  return playerList.find(player => player.gunID === shotID) || 
+         console.log("Could not find player with Shot ID:", shotID, "in", playerList);
 }
 
 function timer() {
@@ -278,8 +265,8 @@ function irEvent(event) {
 
     if (playerHealth <= 0) {
       let deathInfo = {
-          shooterID: event.shooterID,
-          shooterName: getPlayerFromID(event.shooterID).username,
+          shooterID: shooterID,
+          shooterName: getPlayerFromID(shooterID).username,
           killedName: username,
           weapon: event.weaponID,
           time: new Date()

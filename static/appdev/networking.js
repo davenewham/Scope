@@ -1,5 +1,5 @@
 var socket = new window.WebSocket("wss://" + window.location.host);
-var timer = null;
+var reconnect_timer = null;
 
 function onMessage(event) {
   console.log("WebSocket message received:", event.data);
@@ -32,16 +32,25 @@ function onMessage(event) {
 }
 
 let initMsg = { "msgType": "join" };
+let reconnectMsg = { "msgType": "reconnect", "username": "" };
 function onOpen() {
-  clearInterval(timer);
-  timer = null;
-  socket.send(JSON.stringify(initMsg));
+  if ((reconnect_timer !== null)) {
+    clearInterval(reconnect_timer);
+    reconnect_timer = null;
+  }
+
+  if (username === undefined || username === null || username === "") {
+    socket.send(JSON.stringify(initMsg));
+  } else {
+    reconnectMsg["username"] = username;
+    socket.send(JSON.stringify(reconnectMsg))
+  }
 }
 
 function onClose() {
   console.log("WebSocket closed, needing for reconnection.");
-  if (timer === null) {
-    timer = setInterval(() => {
+  if (reconnect_timer === null) {
+    reconnect_timer = setInterval(() => {
       reconnect();
     }, 3000);
   }

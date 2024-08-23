@@ -134,10 +134,10 @@ wss.on("connection", (ws) => {
 					break;
 				}
 				let playerdata = game.players.find(player => {
-					return player.uuid == command.uuid;
+					return player.username == command.username;
 				});
 				if (!playerdata) {
-					console.log("Could not find player uuid to reconnect");
+					console.log("Could not find player username to reconnect");
 					break;
 				}
 				playerdata.ws = ws;

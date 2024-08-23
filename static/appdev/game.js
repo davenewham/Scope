@@ -44,6 +44,9 @@ function lobbyUpdated(players) {
     let text = document.createElement("H3");
     container.classList.add('player');
     text.innerHTML = player.username;
+    if (player.ready) {
+      text.innerHTML += " - <u>Ready</u>"
+    }
     container.appendChild(text);
     lobbyRoster.appendChild(container);
   });

@@ -1,5 +1,6 @@
 var socket = new window.WebSocket("wss://" + window.location.host);
 var reconnect_timer = null;
+let uuid = null;
 
 function onMessage(event) {
   console.log("WebSocket message received:", event.data);
@@ -42,7 +43,7 @@ function onOpen() {
   if (username === undefined || username === null || username === "") {
     socket.send(JSON.stringify(initMsg));
   } else {
-    reconnectMsg["username"] = username;
+    reconnectMsg["uuid"] = uuid;
     socket.send(JSON.stringify(reconnectMsg))
   }
 }

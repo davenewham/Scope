@@ -112,7 +112,7 @@ wss.on("connection", (ws) => {
 			case "join":
 				if (game.state != "waiting") {
 					console.log("Join rejected: Game already in progress");
-					player.ws.send(ws.id, JSON.stringify({ msgType: "gameAlreadyStarted" }));
+					ws.send(ws.id, JSON.stringify({ msgType: "gameAlreadyStarted" }));
 					break;
 				}
 				if (ws.game) {
@@ -129,17 +129,20 @@ wss.on("connection", (ws) => {
 				ws.player = player;
 				break;
 			case "reconnect":
+				console.log(`Player with UUID ${command.uuid} is trying to reconnect...`)
 				if (ws.game) {
 					console.log("Player is already connected");
 					break;
 				}
 				let playerdata = game.players.find(player => {
-					return player.username == command.username;
+					return player.uuid == command.uuid;
 				});
 				if (!playerdata) {
-					console.log("Could not find player username to reconnect");
+					console.log(`Could not find player uuid to reconnect: ${command.uuid}`);
 					break;
 				}
+
+				console.log(`User has successfully reconnected!`)
 				playerdata.ws = ws;
 				ws.game = game;
 				break;

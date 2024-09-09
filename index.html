@@ -4,14 +4,14 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <title>Scope</title>
-    <link rel="stylesheet" type="text/css" href="main.css">
-    <link rel="stylesheet" type="text/css" href="setup.css">
+    <link rel="stylesheet" type="text/css" href="/main.css">
+    <link rel="stylesheet" type="text/css" href="/setup.css">
     <link href="https://fonts.googleapis.com/css2?family=Rubik:wght@400&display=swap" rel="stylesheet">
   </head>
   <body>
     <!-- Splash -->
     <div id="splash">
-        <img id="splashlogo" src="../assets/imgs/droopcatlogo.svg" alt="hoi">
+        <img id="splashlogo" src="/imgs/droopcatlogo.svg" alt="hoi">
     </div>
     <!-- Splash -->
     <div id="incompatable">
@@ -22,7 +22,7 @@
       <div id="setupgun" class="setup">
           <h1>Setup<br>your gun</h1>
           <div id="power">
-            <img src="../assets/icons/gun_power_button.svg" alt="power button">
+            <img src="/icons/gun_power_button.svg" alt="power button">
             <h2>Press the power button<br>on the side of your gun</h2>
           </div>
 
@@ -82,7 +82,7 @@
     <!-- Lobby -->
     <div id="lobby">
       <div id="lobbybar">
-        <img src="/assets/icons/settings.svg" alt="settings">
+        <img src="/icons/settings.svg" alt="settings">
         <h1>Player Lobby</h1>
       </div>
       <div id="roster">
@@ -127,7 +127,7 @@
         <h1>drag test</h1>
       </div> -->
       <div id="mainTopBar">
-        <img src="/assets/icons/settings.svg" alt="settings">
+        <img src="/icons/settings.svg" alt="settings">
         <div id="mainCountdown">
           <h2 id="gameTimerElement">7:35</h2>
           <h4>REMAINING</h4>
@@ -135,14 +135,14 @@
       </div>
       <div id="mainStatsBar">
         <div>
-          <img src="/assets/icons/crosshair.svg" alt="settings">
+          <img src="/icons/crosshair.svg" alt="settings">
           <h2 id="kills">3</h2>
         </div>
         <div>
           <h2 id="ingameleaderboard">2nd</h2>
         </div>
         <div>
-          <img src="/assets/icons/skull.svg" alt="settings">
+          <img src="/icons/skull.svg" alt="settings">
           <h2 id="deaths">1</h2>
         </div>
       </div>
@@ -158,7 +158,7 @@
       <div id="mainBottomBar">
         <div id="mainBottomBarLeft">
           <div id="ammoBox">
-            <img src="/assets/icons/ammo.svg" alt="ammo">
+            <img src="/icons/ammo.svg" alt="ammo">
             <h3 id=ammoDisplayElement>54/144</h3>
           </div>
         </div>
@@ -166,17 +166,17 @@
             <progress id="healthBar" value="25" max="100"></progress>
         </div>
         <div id="mainBottomBarRight">
-          <img src="/assets/icons/backpack.svg" alt="backpack">
+          <img src="/icons/backpack.svg" alt="backpack">
         </div>
       </div>
     </div>
     <!-- Scripts -->
-    <script src="map.js"></script>
-    <script src="game.js"></script>
-    <script src="audio.js"></script>
-    <script src="/assets/lib/recoilweapon.js"></script>
-    <script src="networking.js"></script>
-    <script src="utils.js"></script>
-    <script src="setup.js"></script>
+    <script src="src/client/map.js"></script>
+    <script src="src/client/game.js"></script>
+    <script src="src/client/services/audio.js"></script>
+    <script src="src/client/services/recoilweapon.js"></script>
+    <script src="src/client/services/networking.js"></script>
+    <script src="src/client/utils/utils.js"></script>
+    <script  src="src/client/utils/setup.js"></script>
   </body>
 </html>

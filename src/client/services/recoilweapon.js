@@ -19,16 +19,16 @@
     muzzleLedPower: 255,
     motorPower: 18,
   };
-  var lastAmmo = 0;
-  var lastButtonCount = {
+  let lastAmmo = 0;
+  let lastButtonCount = {
     trigger: 0,
     reload: 0,
     radio: 0,
     power: 0,
     recoil: 0,
   };
-  var lastShotCount = 0;
-  var packetCounter = null;
+  let lastShotCount = 0;
+  let packetCounter = null;
 
   class RecoilGun {
     constructor() {
@@ -52,6 +52,7 @@
     }
 
     connect() {
+      console.log("connecting")
       return new Promise(async (resolve, reject) => {
         this._queue(() => this._connect().then(()=>resolve()).catch(()=>reject()));
       });
@@ -96,6 +97,7 @@
           this.isConnected = true;
           resolve();
         } catch (e) {
+          console.log(e)
           reject(e);
         }
       });
@@ -397,7 +399,7 @@
     }
 
     _queue(f) {
-			var that = this;
+			let that = this;
 			
 			function run() {
 				if (!that._QUEUE.length) {

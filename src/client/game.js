@@ -44,6 +44,9 @@ function lobbyUpdated(players) {
     let text = document.createElement("H3");
     container.classList.add('player');
     text.innerHTML = player.username;
+    if (player.ready) {
+      text.innerHTML += " - <u>Ready</u>"
+    }
     container.appendChild(text);
     lobbyRoster.appendChild(container);
   });
@@ -125,6 +128,8 @@ function backToLobby() {
 function readyGun() {
   currentWeapon = findWeapon(gameSettings.defaultWeapon);
   RecoilGun.gunSettings.shotId = playerGameData.gunID;
+  // Let the gun know we want this ID!
+  RecoilGun.setGunId(playerGameData.gunID);
   RecoilGun.gunSettings.recoil = playerSettings.recoil;
   RecoilGun.updateSettings();
   weaponDefinitions.forEach((weapon, i) => {
@@ -164,24 +169,9 @@ function findWeapon(name) {
 }
 
 function getPlayerFromID(shotID) {
-  console.log("Shots fired. Shot ID:");
-  console.log(shotID);
-
-  // workaround test: substract one from the shotID
-  shotID = shotID - 1;
-
-  let thePlayer = null;
-  playerList.forEach((player, i) => {
-    if (player.gunID == shotID) {
-      thePlayer = player;
-    }
-  });
-  if (thePlayer !== null) {
-    return thePlayer;
-  } else {
-    console.log("Could not find player:", name);
-    return null;
-  }
+  console.debug("Receieved shot from Shot ID:", shotID, "checking current playerlist", playerList);
+  return playerList.find(player => player.gunID === shotID) || 
+         console.log("Could not find player with Shot ID:", shotID, "in", playerList);
 }
 
 function timer() {
@@ -277,14 +267,15 @@ function irEvent(event) {
     updateHealth();
 
     if (playerHealth <= 0) {
-      // Player is dead
-      const deathInfo = {
-        shooterID: shooterID,
-        weapon: weaponID,
-        time: new Date()
-      };
-      deathList.push(deathInfo);
-      dead(deathInfo);
+      let deathInfo = {
+          shooterID: shooterID,
+          shooterName: getPlayerFromID(shooterID).username,
+          killedName: username,
+          weapon: event.weaponID,
+          time: new Date()
+      }
+        deathList.push(deathInfo);
+        dead(deathInfo);
     }
   }
 }

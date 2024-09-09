@@ -1,139 +1,113 @@
-const WebSocket = require("ws");
-const express = require("express");
-const fsp = require("fs").promises;
-const fs = require("fs");
-var https = require("https");
-var http = require("http");
-const stripJsonComments = require("strip-json-comments");
-var colors = require('@colors/colors');
+import WebSocket, { WebSocketServer } from 'ws';
+import express from "express";
+import * as fsp from "fs/promises";
+import * as fs from "fs";
+import * as https from "https";
+import stripJsonComments from "strip-json-comments";
 
-const app = express();
+import { WeaponDefinition } from "../interfaces/WeaponDefinition";
+import { Game } from "../interfaces/Game";
+import { Player } from "../interfaces/Player";
+
 const serverPort = 3000;
-const useHTTPS = true; // This setting exists for reverse proxy use
-var defaultSettings;
+let defaultSettings;
 
-/**
- * @typedef {Object} weaponDefinition
- * @property {string} name
- * @property {string} description
- * @property {number} slotID
- * @property {number} damage
- * @property {number} maxLoadedAmmo
- * @property {number} maxClips
- * @property {Object} behavior
- * @property {number} behavior.triggerMode
- * @property {number} behavior.rateOfFire
- * @property {number & (>=0) & (<=254)} behavior.muzzleFlashMode
- * @property {number} behavior.flashParam1
- * @property {number} behavior.flashParam2
- * @property {number & (>=0) & (<=255)} behavior.narrowIrPower
- * @property {number & (>=0) & (<=255)} behavior.wideIrPower
- * @property {number & (>=0) & (<=255)} behavior.muzzleLedPower
- * @property {number} behavior.motorPower
- */
-/**
- * @type {weaponDefinition[]}
- */
-var weaponDefinitions = [];
-var socketCounter = 0;
+let weaponDefinitions: WeaponDefinition[] = [];
+let socketCounter = 0;
 
-async function loadConf() {
-	// load game config
-	const defaultSettingsData = await fsp
-		.readFile("config/game/default.jsonc")
-		.catch((err) => {
-			console.error(err);
-			return;
-		});
-	defaultSettings = JSON.parse(stripJsonComments(defaultSettingsData.toString()));
 
-	// Read weapon configs
-	let files = await fsp.readdir('config/weapon').catch(err => {
-		console.error('Unable to read weapon config directory: ' + err);
-		return;
-	});
-	files.forEach(async file => {
-		console.log(colors.yellow("Found weapon config", file));
-		let data = await fsp.readFile('config/weapon/' + file).catch(err => { console.log("Failed to read file", err); });
-		weaponDefinitions.push(JSON.parse(stripJsonComments(data.toString())));
-	});
-}
-
-var game = {
+let game: Game = {
+	id: makeUID(6),
 	state: "waiting",
 	players: [],
 	timer: null,
 	gameEnd: null,
 	settings: null,
-	// settings: {
-	//   startOnReady: true,
-	//   gameTimeMins: 1,
-	//   preStartCooldown: 5000,
-	//   defaultWeapon: "RK-45",
-	//   startAmmo: "full",
-	//   telemetry: false,
-	//   dropAmmoOnReload: false,
-	// },
 };
+
+async function loadConf() {
+	// load game config
+	try {
+		const defaultSettingsData = await fsp.readFile("config/game/default.jsonc")
+		defaultSettings = JSON.parse(stripJsonComments(defaultSettingsData.toString()));
+	} catch (err) {
+		console.error(err);
+	}
+
+	// Read weapon configs
+	try {
+		const files = await fsp.readdir('config/weapon');
+		for (const file of files) {
+			console.log(("Found weapon config" + file));
+			try {
+				const data = await fsp.readFile('config/weapon/' + file, "utf-8")
+				weaponDefinitions.push(JSON.parse(stripJsonComments(data.toString())));
+			} catch (err) {
+				console.log("Failed to read file: ", file, err);
+			}
+		}
+
+	} catch (err) {
+		console.error('Unable to read weapon config directory: ' + err);
+	}
+}
 
 loadConf().then(() => {
 	game.settings = defaultSettings;
 });
-game.id = makeUID(6);
-console.log(("Game id: " + game.id).green);
+console.log(("Game id: " + game.id));
 
-app.use("/", express.static("static/appdev"));
-app.use(express.static("static"));
-var httpServer;
-if (useHTTPS) {
-	httpServer = https.createServer(
-		{
-			key: fs.readFileSync("certs/server.key"),
-			cert: fs.readFileSync("certs/server.cert"),
-		},
-		app
-	);
-} else {
-	httpServer = http.createServer(app);
-}
-const wss = new WebSocket.Server({ server: httpServer });
+const httpServer = https.createServer(
+	{
+		key: fs.readFileSync("certs/server.key"),
+		cert: fs.readFileSync("certs/server.cert"),
+	},
+	express()
+);
+
+const wss: WebSocketServer = new WebSocket.Server({ server: httpServer });
 httpServer.listen(serverPort, () => {
-	console.log("Listening at https://localhost:3000/".yellow);
+	console.log("Server listening at https://localhost:3000/");
 });
 
-wss.on("connection", (ws) => {
+function handleJoin(ws: WebSocket & { id?: number; game?: Game; player?: Player }, command: any) {
+	if (game.state !== "waiting") {
+		console.log("Join rejected: Game already in progress");
+		ws.send(JSON.stringify({ msgType: "gameAlreadyStarted" }));
+		return;
+	}
+	if (ws.game) {
+		console.log("Player has already joined game");
+		return;
+	}
+	const player: Player = {
+		username: undefined,
+		ws: ws,
+		uuid: makeUID(10),
+	};
+	game.players.push(player);
+	ws.game = game;
+	ws.player = player;
+}
+
+
+wss.on("connection", (ws: WebSocket) => {
 	ws.id = socketCounter += 1; // Label this socket
 	console.log("Websocket Connection | WSID:", ws.id);
 
-	ws.on("message", message => {
-		let command = JSON.parse(message);
+	ws.on("message", (message: string) => {
+		const command = JSON.parse(message);
 		console.log(command);
 		switch (command.msgType) {
 			case "join":
-				if (game.state != "waiting") {
-					console.log("Join rejected: Game already in progress");
-					player.ws.send(ws.id, JSON.stringify({ msgType: "gameAlreadyStarted" }));
-					break;
-				}
-				if (ws.game) {
-					console.log("Player has already joined game");
-					break;
-				}
-				// Add user to the player list
-				let player = {};
-				player.username = undefined;
-				player.ws = ws;
-				player.uuid = makeUID(10);
-				game.players.push(player);
-				ws.game = game;
-				ws.player = player;
+				handleJoin(ws, command);
 				break;
 			case "reconnect":
 				if (ws.game) {
 					console.log("Player is already connected");
 					break;
 				}
-				let playerdata = game.players.find(player => {
+				const playerdata = ws.game.players.find(player => {
 					return player.uuid == command.uuid;
 				});
 				if (!playerdata) {
@@ -209,7 +183,7 @@ function startGame() {
 			player.ws.send(JSON.stringify({
 				msgType: "updateGameState",
 				state: "starting",
-				cooldown: game.settings.preStartCooldown,
+				cooldown: game.settings!.preStartCooldown,
 			}));
 		});
 
@@ -218,10 +192,10 @@ function startGame() {
 			game.players.forEach(player => {
 				player.ws.send(JSON.stringify({ msgType: "updateGameState", state: "started" }));
 			});
-			let currentTime = new Date();
-			game.gameEnd = new Date(currentTime.getTime() + (60000 * game.settings.gameTimeMins)); // Korrekte Zeitberechnung
-			mainTimer = setTimeout(() => { endGame() }, 60000 * game.settings.gameTimeMins);
-		}, game.settings.preStartCooldown);
+			const currentTime = new Date();
+			game.gameEnd = new Date(currentTime.getTime() + (60000 * game.settings!.gameTimeMins)); // Korrekte Zeitberechnung
+			game.timer = setTimeout(() => { endGame() }, 60000 * game.settings!.gameTimeMins);
+		}, game.settings!.preStartCooldown);
 	} else {
 		console.log("Game already started");
 	}
@@ -299,32 +273,25 @@ function handleGameMessage(ws, message) {
 }
 
 function makeUID(length) {
-	var result = "";
-	var characters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
-	var charactersLength = characters.length;
-	for (var i = 0; i < length; i++) {
+	let result = "";
+	let characters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+	let charactersLength = characters.length;
+	for (let i = 0; i < length; i++) {
 		result += characters.charAt(Math.floor(Math.random() * charactersLength));
 	}
 	return result;
 }
 
-function lobbyUpdate(players) {
+function lobbyUpdate(players: Player[]) {
 	console.log("lobby update");
-	let filteredPlayerList = [];
-	players.forEach(player => {
-		if (player.state == undefined) {
-			return;
-		}
-		let ready = false;
-		if (player.state == "ready") {
-			ready = true;
-		}
-		filteredPlayerList.push({
+	const filteredPlayerList = players
+		.filter(player => player.state !== undefined)
+		.map(player => ({
 			username: player.username,
 			uuid: player.uuid,
-			ready: ready,
-		});
-	});
+			ready: player.state === "ready",
+		}));
+
 	players.forEach(player => {
 		player.ws.send(JSON.stringify({
 			msgType: "lobbyUpdate",
@@ -333,20 +300,15 @@ function lobbyUpdate(players) {
 	})
 }
 
-function playerListUpdate(game) {
-	let filteredPlayerList = [];
-	let { players } = game;
-	players.forEach(player => {
-		if (player.state != "ready") {
-			return;
-		}
-		filteredPlayerList.push({
+function playerListUpdate(game: Game) {
+	const filteredPlayerList = game.players
+		.filter(player => player.state === "ready")
+		.map(player => ({
 			username: player.username,
 			uuid: player.uuid,
-			gunID: player.gunID
-		});
-	});
-	players.forEach(player => {
+			gunID: player.gunID,
+		}));
+	game.players.forEach(player => {
 		player.ws.send(JSON.stringify({
 			msgType: "playerListUpdate",
 			players: filteredPlayerList,

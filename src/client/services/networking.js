@@ -1,6 +1,10 @@
-const socket = new window.WebSocket("wss://" + window.location.host + "/api");
+const ws_address = "wss://" + window.location.host + "/api";
+let socket = new window.WebSocket(ws_address);
 
-socket.onmessage = function (event) {
+let reconnect_timer = null;
+let uuid = null;
+
+function onMessage(event) {
   console.log("WebSocket message received:", event.data);
   let message = JSON.parse(event.data);
   switch (message.msgType) {
@@ -28,9 +32,43 @@ socket.onmessage = function (event) {
       enemyKilled();
       break;
   }
-};
+}
 
-let initMsg = { "msgType": "join" }
-socket.onopen = () => {
-  socket.send(JSON.stringify(initMsg));
-};
+let initMsg = { "msgType": "join" };
+let reconnectMsg = { "msgType": "reconnect", "uuid": "" };
+function onOpen() {
+  if ((reconnect_timer !== null)) {
+    clearInterval(reconnect_timer);
+    reconnect_timer = null;
+  }
+
+  if (username === undefined || username === null || username === "") {
+    socket.send(JSON.stringify(initMsg));
+  } else {
+    reconnectMsg["uuid"] = uuid;
+    socket.send(JSON.stringify(reconnectMsg))
+  }
+}
+
+function onClose() {
+  console.log("WebSocket closed, needing for reconnection.");
+  if (reconnect_timer === null) {
+    reconnect_timer = setInterval(() => {
+      reconnect();
+    }, 3000);
+  }
+}
+
+function reconnect() {
+  console.log("Trying to reconnect to server ...")
+  socket = new window.WebSocket(ws_address);
+  connect();
+}
+
+function connect() {
+  socket.onmessage = onMessage;
+  socket.onopen = onOpen;
+  socket.onclose = onClose;
+}
+
+connect();

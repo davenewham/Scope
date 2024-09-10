@@ -38,11 +38,10 @@ let weaponDefinitions = [
 
 //Lobby stuff
 function lobbyUpdated(players) {
-  let uuid = "";
 
   lobbyRoster.innerHTML = "";
   players.forEach((player, i) => {
-    if ((uuid === null || uuid == "") && (player.username === username)) {
+    if ((uuid === null || uuid === "") && (player.username === username)) {
       uuid = player.uuid;
     }
     let container = document.createElement("DIV");

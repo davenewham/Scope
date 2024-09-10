@@ -4,6 +4,7 @@ import * as fsp from "fs/promises";
 import * as fs from "fs";
 import * as https from "https";
 import stripJsonComments from "strip-json-comments";
+import { inspect } from 'util';
 
 import { WeaponDefinition } from "../interfaces/WeaponDefinition";
 import { Game } from "../interfaces/Game";
@@ -88,6 +89,8 @@ function handleJoin(ws: WebSocket & { id?: number; game?: Game; player?: Player 
 	game.players.push(player);
 	ws.game = game;
 	ws.player = player;
+	console.log(`ws now should have a game: ${inspect(ws.game)}`);
+	console.log(`as well as a player: ${inspect(ws.player)}`);
 }
 
 
@@ -103,6 +106,10 @@ wss.on("connection", (ws: WebSocket) => {
 				handleJoin(ws, command);
 				break;
 			case "reconnect":
+				console.log(`Player with UUID ${command.uuid} is trying to reconnect...`);
+				console.log(`In Reconnect the ws should have a game: ${inspect(ws.game)}`);
+				console.log(`As well as a players list within game: ${inspect(ws.game.players)}`);
+
 				if (ws.game) {
 					console.log("Player is already connected");
 					break;
@@ -111,9 +118,11 @@ wss.on("connection", (ws: WebSocket) => {
 					return player.uuid == command.uuid;
 				});
 				if (!playerdata) {
-					console.log("Could not find player uuid to reconnect");
+					console.log(`Could not find player uuid to reconnect: ${command.uuid}`);
 					break;
 				}
+
+				console.log(`User has successfully reconnected!`);
 				playerdata.ws = ws;
 				ws.game = game;
 				break;

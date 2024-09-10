@@ -9,8 +9,8 @@ If your browser is older, you might need to enable the `#experimental-web-platfo
 
 ## Installation (\*nix)
 ```
-$ git clone https://github.com/DroopCat/Scope.git
+$ git clone https://github.com/pegelf/Scope.git
 $ cd Scope
 $ npm install
-$ node server.js
+$ npm run dev
 ```

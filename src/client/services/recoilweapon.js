@@ -298,10 +298,10 @@
       lastAmmo = telemetry.ammo;
 
       telemetry.IrEvent1 = {};
-      telemetry.IrEvent1.rawPayload = value.getUint16(8, true);
-      telemetry.IrEvent1.sensor = (value.getUint8(10) & 0xf0) >> 4;
+      telemetry.IrEvent1.rawPayload = value.getUint16(8, true); //bytes 8-9 (16 bit)
+      telemetry.IrEvent1.sensor = (value.getUint8(10) & 0xf0) >> 4; // Byte 10 (high nibble)
+      telemetry.IrEvent1.weaponID = (value.getUint16(8, true) >> 6) & 0x0f; // Bytes 08-09 with mask with mask
       telemetry.IrEvent1.shooterID = value.getUint8(9) >> 2;
-      telemetry.IrEvent1.weaponID = (value.getUint16(8, true) >> 6) & 0x0f;
       telemetry.IrEvent1.plasmaRounds = (value.getUint8(8) >> 3) & 0x07;
       telemetry.IrEvent1.shotCount = value.getUint8(8) & 0x07;
       telemetry.IrEvent1.eventCount = value.getUint8(10) & 0x0f;

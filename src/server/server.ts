@@ -1,4 +1,4 @@
-import WebSocket, { WebSocketServer } from 'ws';
+import { Server } from "socket.io";
 import express from "express";
 import * as fsp from "fs/promises";
 import * as fs from "fs";
@@ -57,7 +57,7 @@ loadConf().then(() => {
 });
 console.log(("Game id: " + game.id));
 
-const httpServer = https.createServer(
+const httpsServer = https.createServer(
 	{
 		key: fs.readFileSync("certs/server.key"),
 		cert: fs.readFileSync("certs/server.cert"),
@@ -65,57 +65,57 @@ const httpServer = https.createServer(
 	express()
 );
 
-const wss: WebSocketServer = new WebSocket.Server({ server: httpServer });
-httpServer.listen(serverPort, () => {
+const io = new Server(httpsServer);
+
+httpsServer.listen(serverPort, () => {
 	console.log("Server listening at https://localhost:3000/");
 });
 
-function handleJoin(ws: WebSocket & { id?: number; game?: Game; player?: Player }, command: any) {
+function handleJoin(socket: any & { id?: number; game?: Game; player?: Player }, command: any) {
 	if (game.state !== "waiting") {
 		console.log("Join rejected: Game already in progress");
-		ws.send(JSON.stringify({ msgType: "gameAlreadyStarted" }));
+		socket.emit({ msgType: "gameAlreadyStarted" });
 		return;
 	}
-	if (ws.game) {
+	if (socket.game) {
 		console.log("Player has already joined game");
 		return;
 	}
 	const player: Player = {
 		username: undefined,
-		ws: ws,
+		socket: socket,
 		uuid: makeUID(10),
 	};
 	game.players.push(player);
-	ws.game = game;
-	ws.player = player;
+	socket.game = game;
+	socket.player = player;
 }
 
 
-wss.on("connection", (ws: WebSocket) => {
-	ws.id = socketCounter += 1; // Label this socket
-	console.log("Websocket Connection | WSID:", ws.id);
+io.on("connection", (socket: any & { id?: number; game?: Game; player?: Player }) => {
+	console.log("Websocket Connection | WSID:", socket.id);
 
-	ws.on("message", (message: string) => {
+	socket.on("message", (message) => {
 		const command = JSON.parse(message);
 		console.log(command);
 		switch (command.msgType) {
 			case "join":
-				handleJoin(ws, command);
+				handleJoin(socket, command);
 				break;
 			case "reconnect":
-				if (ws.game) {
+				if (socket.game) {
 					console.log("Player is already connected");
 					break;
 				}
-				const playerdata = ws.game.players.find(player => {
+				const playerdata = socket.game.players.find(player => {
 					return player.uuid == command.uuid;
 				});
 				if (!playerdata) {
 					console.log("Could not find player uuid to reconnect");
 					break;
 				}
-				playerdata.ws = ws;
-				ws.game = game;
+				playerdata.socket = socket;
+				socket.game = game;
 				break;
 			case "updateGameSettings":
 				game.settings = command.settings;
@@ -126,27 +126,27 @@ wss.on("connection", (ws: WebSocket) => {
 				break;
 
 			case "setUsername":
-				ws.player.username = command.username;
-				lobbyUpdate(ws.game.players);
+				socket.player.username = command.username;
+				lobbyUpdate(socket.game.players);
 				break;
 
 			default:
-				if (ws.game) {
-					handleGameMessage(ws, command);
+				if (game) {
+					handleGameMessage(socket, command);
 				}
 				break;
 		}
 	});
-	ws.on("close", () => {
-		let missingPlayerIndex = ws.game.players.findIndex(player => { return player.ws.id == ws.id });
+	socket.on("disconnect", () => {
+		let missingPlayerIndex = game.players.findIndex(player => player.socket.id === socket.id);
 		if (missingPlayerIndex == -1) {
 			console.log("could not find player to remove");
 			return;
 		}
-		console.log(`${ws.game.players[missingPlayerIndex].username || "Player"} Disconnected`);
+		console.log(`${game.players[missingPlayerIndex].username || "Player"} Disconnected`);
 		if (game.state == "waiting") {
-			ws.game.players.splice(missingPlayerIndex, 1);
-			lobbyUpdate(ws.game.players);
+			game.players.splice(missingPlayerIndex, 1);
+			lobbyUpdate(game.players);
 		}
 	});
 });
@@ -154,7 +154,7 @@ wss.on("connection", (ws: WebSocket) => {
 function assignPlayersGunIDs(players) {
 	let counter = 1; // Do not give anyone 0!
 	players.forEach(player => {
-		player.ws.send(JSON.stringify({ msgType: "assignGunID", GunID: counter }));
+		player.socket.emit({ msgType: "assignGunID", GunID: counter });
 		player.gunID = counter++;
 	});
 }
@@ -178,9 +178,9 @@ function startGame() {
 		assignPlayersGunIDs(game.players);
 		playerListUpdate(game);
 		game.players.forEach(player => {
-			player.ws.send(JSON.stringify({ "msgType": "updateGameSettings", "settings": game.settings }));
-			player.ws.send(JSON.stringify({ "msgType": "updateWeaponDefinitions", "weapons": weaponDefinitions }));
-			player.ws.send(JSON.stringify({
+			player.socket.emit(JSON.stringify({ "msgType": "updateGameSettings", "settings": game.settings }));
+			player.socket.emit(JSON.stringify({ "msgType": "updateWeaponDefinitions", "weapons": weaponDefinitions }));
+			player.socket.emit(JSON.stringify({
 				msgType: "updateGameState",
 				state: "starting",
 				cooldown: game.settings!.preStartCooldown,
@@ -189,9 +189,7 @@ function startGame() {
 
 		setTimeout(() => {
 			game.state = "started";
-			game.players.forEach(player => {
-				player.ws.send(JSON.stringify({ msgType: "updateGameState", state: "started" }));
-			});
+			io.emit("updateGameState", {state: "started"});
 			const currentTime = new Date();
 			game.gameEnd = new Date(currentTime.getTime() + (60000 * game.settings!.gameTimeMins)); // Korrekte Zeitberechnung
 			game.timer = setTimeout(() => { endGame() }, 60000 * game.settings!.gameTimeMins);
@@ -202,20 +200,18 @@ function startGame() {
 }
 
 function endGame() {
-	game.players.forEach(player => {
-		player.ws.send(JSON.stringify({ msgType: "updateGameState", state: "ended" }));
-	});
+	io.emit("updateGameState", { state: "ended"});
 	console.log(`Game ended (${game.id})`);
 	game.state = "waiting";
 }
 
-function handleGameMessage(ws, message) {
+function handleGameMessage(socket, message) {
 	// declare player variable
 	let player;
 
 	// attempt to set player variable
 	try {
-		player = ws.game.players.find(player => player.ws.id == ws.id);
+		player = socket.game.players.find(player => player.socket.id == socket.id);
 	} catch (e) {
 		// if an error occurs, log it (optional) and proceed
 		console.error("Failed to set player:", e);
@@ -226,7 +222,7 @@ function handleGameMessage(ws, message) {
 		case "getGameEndTime":
 			if (game.state == "started") {
 				// get remaining battle time
-				player.ws.send(ws.id, JSON.stringify({ "msgType": "remainingTime", "time": ws.game.gameEnd }));
+				player.socket.emit("remainingTime", {"time": socket.game.gameEnd });
 			}
 			break;
 		case "setState":
@@ -234,17 +230,17 @@ function handleGameMessage(ws, message) {
 				return;
 			}
 			player.state = message.state;
-			if (ws.game.settings.startOnReady == true) {
-				if (allPlayersReady(ws.game.players)) {
+			if (socket.game.settings.startOnReady) {
+				if (allPlayersReady(socket.game.players)) {
 					console.log("All players are ready.");
 					setTimeout(() => {
-						if (allPlayersReady(ws.game.players) && (game.state == "waiting")) {
+						if (allPlayersReady(socket.game.players) && (game.state == "waiting")) {
 							startGame();
 						}
 					}, 2000);
 				}
 			}
-			lobbyUpdate(ws.game.players);
+			lobbyUpdate(socket.game.players);
 			break;
 		case "forceStartGame":
 			startGame();
@@ -253,7 +249,7 @@ function handleGameMessage(ws, message) {
 			/*
 			message.info includes attributes: shooterID, shooterName, killedName, weapon, time
 			 */
-			let killer = ws.game.players.find(player => {
+			let killer = socket.game.players.find(player => {
 				console.log('== Try to match the shooter id with a player ==')
 				console.log(`player.username: ${player.username}`);
 				console.log(`message.info.shooterName: ${message.info.shooterName}`)
@@ -262,12 +258,8 @@ function handleGameMessage(ws, message) {
 			});
 
 			try {
-				let killmsg = {
-					msgType: "kill",
-					killed: message.info.killedName,
-					weapon: message.info.weaponID
-				}
-				killer.ws.send(JSON.stringify(killmsg));
+				killer.socket.emit("kill", {killed: message.info.killedName,
+					weapon: message.info.weaponID});
 			} catch (error) {
 				console.log(`Failed to set killer due to ${error}`);
 				console.log(`killer: ${killer}`);
@@ -295,13 +287,7 @@ function lobbyUpdate(players: Player[]) {
 			uuid: player.uuid,
 			ready: player.state === "ready",
 		}));
-
-	players.forEach(player => {
-		player.ws.send(JSON.stringify({
-			msgType: "lobbyUpdate",
-			players: filteredPlayerList,
-		}));
-	})
+	io.emit("lobbyUpdate", {players: filteredPlayerList})
 }
 
 function playerListUpdate(game: Game) {
@@ -312,10 +298,5 @@ function playerListUpdate(game: Game) {
 			uuid: player.uuid,
 			gunID: player.gunID,
 		}));
-	game.players.forEach(player => {
-		player.ws.send(JSON.stringify({
-			msgType: "playerListUpdate",
-			players: filteredPlayerList,
-		}));
-	});
+	io.emit("playerListUpdate", {players: filteredPlayerList});
 }

@@ -14,7 +14,9 @@
   "author": "Zach Groening",
   "license": "MIT",
   "dependencies": {
+    "@types/socket.io": "^3.0.2",
     "express": "^4.19.2",
+    "socket.io": "^4.7.5",
     "strip-json-comments": "^5.0.1",
     "ws": "^7.5.10"
   },

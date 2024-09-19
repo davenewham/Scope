@@ -114,19 +114,12 @@ function showLeaderboard() {
     { opacity: "1" },
   ];
   leaderBoard.style.display = "grid";
-  leaderBoard.animate(fade, 500);
 }
 
 function backToLobby() {
   readyBtn.classList.remove("readyBtnPressed");
   document.getElementById("lobby").style.display = "grid";
-  let fade = [
-    { opacity: "1" },
-    { opacity: "0" },
-  ];
-  leaderBoard.animate(fade, 500).finished.then(() => {
-    leaderBoard.style.display = "none";
-  });
+  leaderBoard.style.display = "none";
 }
 
 function readyGun() {
@@ -284,13 +277,15 @@ function irEvent(event) {
   }
 }
 
-let hitAnimation = [
-  { opacity: "1" },
-  { opacity: "0" },
-];
-
 function showHit() {
-  document.getElementById("hit").animate(hitAnimation, 600);
+  // hit animation
+  hitElement = document.getElementById("hit");
+  hitElement.style.opacity = 1;
+  setTimeout(() => {
+    hitElement.style.opacity = 0;
+  }, 600);
+
+  // hit haptic feedback
   if (playerSettings.vibrateOnHit) {
     navigator.vibrate([100]);
   }

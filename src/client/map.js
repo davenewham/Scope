@@ -13,8 +13,7 @@ window.onload = () => {
 //   canvas.height = mapParent.clientHeight;
 // };
 
-let sensor = new AbsoluteOrientationSensor();
-sensor.addEventListener("reading", (e) => handleSensor(e));
+
 
 let rotation = 0;
 let scale = 300;
@@ -24,9 +23,18 @@ let inputX = 0;
 let inputY = 0;
 let mapEnable = true;
 let heading = 0;
+let sensor;
+
+// initialize sensor, if available (it's not on iOS)
+if ('AbsoluteOrientationSensor' in window) {
+  sensor = new AbsoluteOrientationSensor();
+  sensor.addEventListener("reading", (e) => handleSensor(e));
+} else {
+  console.log("AbsoluteOrientationSensor is not supported in this browser.");
+}
 
 function draw() {
-  rotation = rotation + (((((0-heading)-rotation)%360)+540)%360-180) / 15
+  rotation = rotation + (((((0 - heading) - rotation) % 360) + 540) % 360 - 180) / 15;
   if (rotation > 360) {
     rotation = rotation - 360;
   } else if (rotation < 0) {
@@ -73,27 +81,31 @@ function drawBox(x, y, rat) {
 }
 
 function startMap() {
-  sensor.start();
-  let options = {
-    enableHighAccuracy: true,
-    timeout: 60000,
-    maximumAge: 0
+  if (sensor) {
+    sensor.start();
+    let options = {
+      enableHighAccuracy: true,
+      timeout: 60000,
+      maximumAge: 0
+    }
+    positionWatcher = navigator.geolocation.watchPosition(posChanged, (error) => { console.log(error) }, options);
+    canvas.width = mapParent.clientWidth;
+    canvas.height = mapParent.clientHeight;
+    rotation = 0;
+    scale = 300;
+    x = 50;
+    y = 50;
+    mapEnable = true;
+    draw();
   }
-  positionWatcher = navigator.geolocation.watchPosition(posChanged, (error)=>{console.log(error)}, options);
-  canvas.width = mapParent.clientWidth;
-  canvas.height = mapParent.clientHeight;
-  rotation = 0;
-  scale = 300;
-  x = 50;
-  y = 50;
-  mapEnable = true;
-  draw();
 }
 
 function stopMap() {
-  sensor.stop();
-  mapEnable = false;
-  navigator.geolocation.clearWatch(positionWatcher);
+  if (sensor) {
+    sensor.stop();
+    mapEnable = false;
+    navigator.geolocation.clearWatch(positionWatcher);
+  }
 }
 
 function posChanged(position) {
@@ -120,9 +132,9 @@ function compassHeading(alpha, beta, gamma) {
   // Calculate compass heading
   let compassHeading = Math.atan(rA / rB);
   // Convert from half unit circle to whole unit circle
-  if(rB < 0) {
+  if (rB < 0) {
     compassHeading += Math.PI;
-  }else if(rA < 0) {
+  } else if (rA < 0) {
     compassHeading += 2 * Math.PI;
   }
   // Convert radians to degrees
@@ -136,7 +148,7 @@ function compassHeading(alpha, beta, gamma) {
 //   // Do something with 'heading'...
 // }, false);
 
-function handleSensor(e){
+function handleSensor(e) {
   let orientation = toEuler(e.target.quaternion);
   heading = compassHeading(orientation.yaw, orientation.pitch, orientation.roll) + 180;
   if (isNaN(heading)) {
@@ -159,36 +171,36 @@ const scaleNum = (num, in_min, in_max, out_min, out_max) => {
 }
 
 function toEuler(q) {
-      let orientation = {};
-      // roll
-      let sinr_cosp = 2 * (q[3] * q[0] + q[1] * q[2]);
-      let cosr_cosp = 1 - 2 * (q[0] * q[0] + q[1] * q[1]);
-      orientation.roll = Math.atan2(sinr_cosp, cosr_cosp);
+  let orientation = {};
+  // roll
+  let sinr_cosp = 2 * (q[3] * q[0] + q[1] * q[2]);
+  let cosr_cosp = 1 - 2 * (q[0] * q[0] + q[1] * q[1]);
+  orientation.roll = Math.atan2(sinr_cosp, cosr_cosp);
 
-      // pitch
-      let pitch = 0;
-      let sinp = 2 * (q[3] * q[1] - q[2] * q[0]);
-      if (Math.abs(sinp) >= 1) {
-        if (sinp > 0){
-          orientation.pitch = Math.asin(1);
-        }else{
-          orientation.pitch = Math.asin(-1);
-        }
-      } else {
-        orientation.pitch = Math.asin(sinp);
-      }
+  // pitch
+  let pitch = 0;
+  let sinp = 2 * (q[3] * q[1] - q[2] * q[0]);
+  if (Math.abs(sinp) >= 1) {
+    if (sinp > 0) {
+      orientation.pitch = Math.asin(1);
+    } else {
+      orientation.pitch = Math.asin(-1);
+    }
+  } else {
+    orientation.pitch = Math.asin(sinp);
+  }
 
-      // yaw
-      let siny_cosp = 2 * (q[3] * q[2] + q[0] * q[1]);
-      let cosy_cosp = 1 - 2 * (q[1] * q[1] + q[2] * q[2]);
-      orientation.yaw = Math.atan2(siny_cosp, cosy_cosp);
+  // yaw
+  let siny_cosp = 2 * (q[3] * q[2] + q[0] * q[1]);
+  let cosy_cosp = 1 - 2 * (q[1] * q[1] + q[2] * q[2]);
+  orientation.yaw = Math.atan2(siny_cosp, cosy_cosp);
 
-      orientation.yaw = orientation.yaw * (180/Math.PI);
-      orientation.pitch = orientation.pitch * (180/Math.PI);
-      orientation.roll = orientation.roll * (180/Math.PI);
-      if (orientation.yaw < 0) {
-        orientation.yaw = orientation.yaw + 360;
-      }
+  orientation.yaw = orientation.yaw * (180 / Math.PI);
+  orientation.pitch = orientation.pitch * (180 / Math.PI);
+  orientation.roll = orientation.roll * (180 / Math.PI);
+  if (orientation.yaw < 0) {
+    orientation.yaw = orientation.yaw + 360;
+  }
 
-      return orientation;
+  return orientation;
 }

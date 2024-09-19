@@ -2,7 +2,6 @@ const ws_address = "wss://" + window.location.host + "/api";
 let socket = new window.WebSocket(ws_address);
 
 let reconnect_timer = null;
-let uuid = null;
 
 function onMessage(event) {
   console.log("WebSocket message received:", event.data);
@@ -42,11 +41,14 @@ function onOpen() {
     reconnect_timer = null;
   }
 
-  if (username === undefined || username === null || username === "") {
-    socket.send(JSON.stringify(initMsg));
-  } else {
+  // reconnect if player already had a username and an uuid
+  if(username && uuid) {
     reconnectMsg["uuid"] = uuid;
     socket.send(JSON.stringify(reconnectMsg))
+  }
+  // first join if player doesn't have these attributes yet
+  else {
+    socket.send(JSON.stringify(initMsg));
   }
 }
 

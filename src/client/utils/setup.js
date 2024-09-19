@@ -1,6 +1,7 @@
 // variables
 let username;
 let storedUsername;
+let uuid;
 let gunChoice;
 let phoneInfo = {};
 

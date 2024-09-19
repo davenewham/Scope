@@ -174,8 +174,8 @@ function findWeapon(name) {
 
 function getPlayerFromID(shotID) {
   console.debug("Receieved shot from Shot ID:", shotID, "checking current playerlist", playerList);
-  return playerList.find(player => player.gunID === shotID) || 
-         console.log("Could not find player with Shot ID:", shotID, "in", playerList);
+  return playerList.find(player => player.gunID === shotID) ||
+    console.log("Could not find player with Shot ID:", shotID, "in", playerList);
 }
 
 function timer() {
@@ -272,14 +272,14 @@ function irEvent(event) {
 
     if (playerHealth <= 0) {
       let deathInfo = {
-          shooterID: shooterID,
-          shooterName: getPlayerFromID(shooterID).username,
-          killedName: username,
-          weapon: event.weaponID,
-          time: new Date()
+        shooterID: shooterID,
+        shooterName: getPlayerFromID(shooterID).username,
+        killedName: username,
+        weapon: event.weaponID,
+        time: new Date()
       }
-        deathList.push(deathInfo);
-        dead(deathInfo);
+      deathList.push(deathInfo);
+      dead(deathInfo);
     }
   }
 }

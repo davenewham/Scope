@@ -1,86 +1,86 @@
 // Game
-var lobbyRoster = document.getElementById("roster");
-var readyBtn = document.getElementById("readyBtn");
-var startCountdown = null;
-var respawnCountdown = null;
-var gameTimer = null;
-var secondsLeft = 0;
-var gameSettings = {};
+let lobbyRoster = document.getElementById("roster");
+let readyBtn = document.getElementById("readyBtn");
+let leaderBoard = document.getElementById("leaderboard");
+let continueBtn = document.getElementById("continueButton");
+let startCountdown = null;
+let respawnCountdown = null;
+let gameTimer = null;
+let secondsLeft = 0;
+let gameSettings = {};
 
 // Player
-var playerSettings = {
-  vibrateOnHit:true,
-  recoil:false,
+let playerSettings = {
+  vibrateOnHit: true,
+  recoil: true,
 };
-var playerGameData = {};
-var playerHealth = 100;
-var playerState = "alive";
-var playerInv = {};
-var deathList = [];
-var kills = 0;
-var playerList = [];
+let playerGameData = {};
+let playerHealth = 100;
+let playerState = "alive";
+let playerInv = {};
+let deathList = [];
+let kills = 0;
+let playerList = [];
 
 //Gun
-var reloading = false;
-var currentWeapon = {};
-var loadedAmmo = 50;
-var availableRoundsLeft = 20;
-var weaponDefinitions = [
+let reloading = false;
+/**
+ * @type {weaponDefinition}
+ */
+let currentWeapon = {};
+let loadedAmmo = 50;
+let availableRoundsLeft = 20;
+/**
+ * @type {weaponDefinition[]}
+ */
+let weaponDefinitions = [
 ];
-
-
-
-readyBtn.addEventListener("click", ready);
-document.getElementById("connectGunbtn").addEventListener("click", ()=>{
-  console.log("Connecting to gun.");
-  RecoilGun.connect().then(() => {
-    bleSuccess();
-    RecoilGun.gunSettings.shotId = 2;
-    RecoilGun.gunSettings.recoil = false;
-    RecoilGun.on("irEvent", irEvent);
-    RecoilGun.on("ammoChanged", ammoChanged);
-    RecoilGun.on("reloadBtn", reload);
-    RecoilGun.switchWeapon(2);
-    RecoilGun.startTelemetry();
-  }).catch((error)=>{
-    console.log("Failure to connect", error);
-    bleFailure();
-  });
-});
 
 //Lobby stuff
 function lobbyUpdated(players) {
+  let uuid = "";
+
   lobbyRoster.innerHTML = "";
   players.forEach((player, i) => {
+    if ((uuid === null || uuid == "") && (player.username === username)) {
+      uuid = player.uuid;
+    }
     let container = document.createElement("DIV");
     let text = document.createElement("H3");
     container.classList.add('player');
     text.innerHTML = player.username;
+    if (player.ready) {
+      text.innerHTML += " - <u>Ready</u>"
+    }
     container.appendChild(text);
     lobbyRoster.appendChild(container);
   });
 }
-function ready () {
+
+/**
+ * Is executed every time the "ready" button is pressed to send the ready state to the server.
+ */
+function ready() {
   if (readyBtn.classList.contains("readyBtnPressed")) {
     readyBtn.classList.remove("readyBtnPressed");
-    socket.send(JSON.stringify({'msgType':'setState', 'state':'lobby'}));
+    socket.send(JSON.stringify({ 'msgType': 'setState', 'state': 'lobby' }));
   } else {
     readyBtn.classList.add("readyBtnPressed");
-    socket.send(JSON.stringify({'msgType':'setState', 'state':'ready'}));
+    socket.send(JSON.stringify({ 'msgType': 'setState', 'state': 'ready' }));
   }
 }
 
 function preGameStart(cooldown) {
   // audio test stuff
-  loadSound("/assets/audio/1911/1911_shot.wav");
-  loadSound("/assets/audio/1911/1911_reload.wav");
+  loadSound(SOUND_GUNSHOT, "/audio/1911/1911_shot.wav");
+  loadSound(SOUND_RELOAD, "/audio/1911/1911_reload.wav");
 
   readyGun();
   document.getElementById("countdown").style.display = "grid";
   document.getElementById("lobby").style.display = "none";
   let countdown = cooldown / 1000;
   document.getElementById("startCountdownNumber").innerHTML = countdown;
-  startCountdown = setInterval(()=>{
+  startCountdown = setInterval(() => {
     if (countdown <= 1) {
       startGame();
       clearInterval(startCountdown);
@@ -93,7 +93,7 @@ function preGameStart(cooldown) {
   //show countdown stuff hide all setup stuff
 }
 
-function startGame () {
+function startGame() {
   startGun();
   console.log("Game Started");
   secondsLeft = gameSettings.gameTimeMins * 60;
@@ -106,12 +106,37 @@ function startGame () {
 function endGame() {
   console.log("Game Ended");
   stopMap();
+  showLeaderboard();
+}
+
+function showLeaderboard() {
+  let fade = [
+    { opacity: "0" },
+    { opacity: "1" },
+  ];
+  leaderBoard.style.display = "grid";
+  leaderBoard.animate(fade, 500);
+}
+
+function backToLobby() {
+  readyBtn.classList.remove("readyBtnPressed");
+  document.getElementById("lobby").style.display = "grid";
+  let fade = [
+    { opacity: "1" },
+    { opacity: "0" },
+  ];
+  leaderBoard.animate(fade, 500).finished.then(() => {
+    leaderBoard.style.display = "none";
+  });
 }
 
 function readyGun() {
   currentWeapon = findWeapon(gameSettings.defaultWeapon);
   RecoilGun.gunSettings.shotId = playerGameData.gunID;
+  // Let the gun know we want this ID!
+  RecoilGun.setGunId(playerGameData.gunID);
   RecoilGun.gunSettings.recoil = playerSettings.recoil;
+  RecoilGun.updateSettings();
   weaponDefinitions.forEach((weapon, i) => {
     RecoilGun.setWeaponProfile(weapon.behavior, weapon.slotID);
   });
@@ -130,6 +155,10 @@ function startGun() {
   updateAmmo();
 }
 
+/**
+ * @param {string} name
+ * @returns WeaponDefinition
+ */
 function findWeapon(name) {
   let theWeapon = null;
   weaponDefinitions.forEach((weapon, i) => {
@@ -139,30 +168,22 @@ function findWeapon(name) {
   });
   if (theWeapon !== null) {
     return theWeapon;
-  }else{
+  } else {
     console.log("Could not find weapon:", name);
   }
 }
 
 function getPlayerFromID(shotID) {
-  let thePlayer = null;
-  playerList.forEach((player, i) => {
-    if (player.gunID == shotID) {
-      thePlayer = player;
-    }
-  });
-  if (thePlayer !== null) {
-    return thePlayer;
-  }else{
-    console.log("Could not find player:", name);
-  }
+  console.debug("Receieved shot from Shot ID:", shotID, "checking current playerlist", playerList);
+  return playerList.find(player => player.gunID === shotID) || 
+         console.log("Could not find player with Shot ID:", shotID, "in", playerList);
 }
 
 function timer() {
   secondsLeft = secondsLeft - 1;
   let mins = Math.floor(secondsLeft / 60);
   let seconds = secondsLeft % 60;
-  let clock = mins.toString() + ":" + seconds.toString();
+  let clock = mins.toString() + ":" + seconds.toString().padStart(2, '0');
   document.getElementById("gameTimerElement").innerHTML = clock;
   if (secondsLeft <= 0) {
     endGame();
@@ -177,13 +198,18 @@ function syncIndicators() {
 }
 
 function reload() {
+  if (playerState === "dead") {
+    // dead players can't shoot :^)
+    return;
+  }
+
   if (!reloading) {
     reloading = true;
-    playSound(0);
+    playSound(SOUND_RELOAD);
     RecoilGun.removeClip();
     updateAmmo();
-    setTimeout(()=>{
-      if(gameSettings.dropAmmoOnReload) {
+    setTimeout(() => {
+      if (gameSettings.dropAmmoOnReload) {
         availableRoundsLeft = availableRoundsLeft - currentWeapon.maxLoadedAmmo;
         loadedAmmo = currentWeapon.maxLoadedAmmo;
       } else {
@@ -195,8 +221,8 @@ function reload() {
         availableRoundsLeft = 0;
       }
       RecoilGun.loadClip(loadedAmmo);
-      updateAmmo();
       reloading = false;
+      updateAmmo();
     }, 1000);
   }
 }
@@ -204,19 +230,26 @@ function reload() {
 function updateAmmo() {
   if (reloading) {
     document.getElementById("ammoDisplayElement").innerHTML = "--/--";
-  }else{
-    document.getElementById("ammoDisplayElement").innerHTML = (loadedAmmo.toString() + "/" + availableRoundsLeft.toString());
+  } else {
+    document.getElementById("ammoDisplayElement").innerHTML = loadedAmmo + "/" + availableRoundsLeft;
   }
 }
+/**
+ * @param {null | number} ammo
+ */
 function ammoChanged(ammo) {
-  playSound(1);
-  loadedAmmo = ammo;
-  updateAmmo();
+  if (ammo !== null) {
+    if (ammo < loadedAmmo) {
+      playSound(SOUND_GUNSHOT);
+    }
+    loadedAmmo = ammo;
+    updateAmmo();
+  }
 }
 
 function updateStats() {
   document.getElementById("kills").innerHTML = kills.toString();
-  document.getElementById("leaderboard").innerHTML = "1st";
+  document.getElementById("ingameleaderboard").innerHTML = "1st";
   document.getElementById("deaths").innerHTML = deathList.length.toString();
 }
 
@@ -225,30 +258,36 @@ function updateHealth() {
 }
 
 function irEvent(event) {
-  if (playerState == "alive") {
+  if (playerState === "dead") {
+    return;
+  }
+
+  const { weaponID, shooterID } = event;
+  const weapon = weaponDefinitions.find(w => w.slotID === weaponID);
+  const damage = weapon ? weapon.damage : 0;
+
+  if (damage > 0) {
     showHit();
-    let damage = 0;
-    weaponDefinitions.forEach((weapon, i) => {
-      if (weapon.slotID == event.weaponID) {
-        damage = weapon.damage;
-      }
-    });
     playerHealth = playerHealth - damage;
     updateHealth();
+
     if (playerHealth <= 0) {
-      let deathInfo = {};
-      deathInfo.shooterID = event.shooterID;
-      deathInfo.weapon = event.weaponID;
-      deathInfo.time = new Date();
-      deathList.push(deathInfo);
-      dead(deathInfo);
+      let deathInfo = {
+          shooterID: shooterID,
+          shooterName: getPlayerFromID(shooterID).username,
+          killedName: username,
+          weapon: event.weaponID,
+          time: new Date()
+      }
+        deathList.push(deathInfo);
+        dead(deathInfo);
     }
   }
 }
 
-var hitAnimation = [
-    {opacity:"1"},
-    {opacity:"0"},
+let hitAnimation = [
+  { opacity: "1" },
+  { opacity: "0" },
 ];
 
 function showHit() {
@@ -259,16 +298,16 @@ function showHit() {
 }
 
 function dead(deathInfo) {
-  let countdown = 5;
+  let countdown = gameSettings.deadTimeSeconds;
   updateDeathScreen();
   document.getElementById("respawnTimer").innerHTML = countdown;
   RecoilGun.removeClip();
-  socket.send(JSON.stringify({"msgType":"kill", "info":deathInfo}));
+  socket.send(JSON.stringify({ "msgType": "kill", "info": deathInfo }));
   stopMap();
   document.getElementById("death").style.display = "block";
   playerState = "dead";
   //setTimeout(respawn, 5000);
-  respawnCountdown = setInterval(()=>{
+  respawnCountdown = setInterval(() => {
     if (countdown <= 1) {
       clearInterval(respawnCountdown);
       respawn();
@@ -287,7 +326,14 @@ function enemyKilled() {
 
 function updateDeathScreen() {
   let death = deathList[deathList.length - 1];
-  document.getElementById("killedBy").innerHTML = getPlayerFromID(death.shooterID).username;
+
+  // try to get the player name, write unknown otherwise
+  try {
+    document.getElementById("killedBy").innerHTML = getPlayerFromID(death.shooterID).username;
+  } catch (error) {
+    document.getElementById("killedBy").innerHTML = "Unknown";
+  }
+
   let killWeapon = "Rick roll";
   weaponDefinitions.forEach((weapon, i) => {
     if (weapon.slotID == death.weapon) {
@@ -306,4 +352,32 @@ function respawn() {
   syncIndicators();
   document.getElementById("death").style.display = "none";
   RecoilGun.loadClip(loadedAmmo);
+}
+
+/**
+ * set the event listeners
+ */
+continueBtn.addEventListener("click", backToLobby);
+readyBtn.addEventListener("click", ready);
+document.getElementById("connectGunbtn").addEventListener("click", () => {
+  console.log("Connecting to gun.");
+  RecoilGun.connect().then(() => {
+    bleSuccess();
+    RecoilGun.gunSettings.shotId = 2;
+    RecoilGun.gunSettings.recoil = false;
+    RecoilGun.on("irEvent", irEvent);
+    RecoilGun.on("ammoChanged", ammoChanged);
+    RecoilGun.on("reloadBtn", reload);
+    RecoilGun.switchWeapon(2);
+    RecoilGun.startTelemetry();
+    RecoilGun.updateSettings();
+  }).catch((error) => {
+    console.log("Failure to connect", error);
+    bleFailure();
+  });
+});
+
+window.onbeforeunload = (evt) => {
+  evt.preventDefault();
+  return evt.returnValue = '';
 }

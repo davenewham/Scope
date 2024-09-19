@@ -33,6 +33,14 @@ function enterFullscreen() {
   fullScreenPermBtn.classList.add("permAllowed");
   checkPerms();
 }
+function fakeFullscreenAndWakeLock() {
+  // for debugging on desktop
+  fullscreen = true;
+  wakeLock = true;
+  fullScreenPermBtn.classList.add("permAllowed");
+  wakeLockPermBtn.classList.add("permAllowed");
+  checkPerms();
+}
 function exitFullscreen() {
   document.exitFullscreen();
 }
@@ -65,6 +73,10 @@ function checkPhoneInfo() {
     } else {
       phoneInfo.bluetoothAvailable = false;
     }
-
+    result.onchange = (event) => {
+      if (event.target.state == "granted") {
+        geoSuccess(1);
+      }
+    }
   });
 }

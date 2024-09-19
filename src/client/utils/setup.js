@@ -10,6 +10,9 @@ let locationPermBtn = document.getElementById("locationPerm");
 
 window.onload = function() {
   checkPhoneInfo();
+  if (!("bluetooth" in navigator)) {
+    document.getElementById("incompatable").style.display = "grid";
+  }
   storedUsername = localStorage.getItem("username");
   if (storedUsername != undefined) {
     document.getElementById("username").value = storedUsername;
@@ -18,6 +21,12 @@ window.onload = function() {
   document.getElementById("ftsetup").style.display = "block";
   document.getElementById("setupusername").style.display = "grid";
   fullScreenPermBtn.addEventListener("click", enterFullscreen);
+  window.addEventListener("keydown", (e) => {
+    if (e.key === "f") {
+      fakeFullscreenAndWakeLock();
+    }
+  })
+  console.log("press f on desktop to skip to pairing");
   wakeLockPermBtn.addEventListener("click", setWakeLock);
   locationPermBtn.addEventListener("click", allowGPS);
   document.getElementById("splash").style.display = "none";
@@ -48,7 +57,7 @@ function allowGPS() {
     console.log(navigator.geolocation.getCurrentPosition(geoSuccess, (error)=>{
       switch(error.code) {
         case error.PERMISSION_DENIED:
-          alert("Looks like location is denied. You will most likely have to enable it in your browsers settings.");
+          alert("Looks like location is denied. To enable it, tap the triangle or padlock to the left of the address bar, tap permissions, and allow location.");
           break;
         case error.POSITION_UNAVAILABLE:
           alert("Looks like geolocation is available but also unavailable? (What?!?)");
@@ -97,7 +106,7 @@ function showPhoneSetupMenu() {
     wakeLockPermBtn.style.display = "none";
   }
   if (phoneInfo.locationEnabled) {
-    locationPermBtn.style.display = "none";
+    locationPermBtn.classList.add("permAllowed");
   } else {
     locationPermBtn.style.display = "grid";
   }

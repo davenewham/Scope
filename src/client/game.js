@@ -38,11 +38,10 @@ let weaponDefinitions = [
 
 //Lobby stuff
 function lobbyUpdated(players) {
-  let uuid = "";
 
   lobbyRoster.innerHTML = "";
   players.forEach((player, i) => {
-    if ((uuid === null || uuid == "") && (player.username === username)) {
+    if ((uuid === null || uuid === "") && (player.username === username)) {
       uuid = player.uuid;
     }
     let container = document.createElement("DIV");
@@ -105,6 +104,7 @@ function startGame() {
 
 function endGame() {
   console.log("Game Ended");
+  RecoilGun.removeClip();
   stopMap();
   showLeaderboard();
 }
@@ -115,19 +115,12 @@ function showLeaderboard() {
     { opacity: "1" },
   ];
   leaderBoard.style.display = "grid";
-  leaderBoard.animate(fade, 500);
 }
 
 function backToLobby() {
   readyBtn.classList.remove("readyBtnPressed");
   document.getElementById("lobby").style.display = "grid";
-  let fade = [
-    { opacity: "1" },
-    { opacity: "0" },
-  ];
-  leaderBoard.animate(fade, 500).finished.then(() => {
-    leaderBoard.style.display = "none";
-  });
+  leaderBoard.style.display = "none";
 }
 
 function readyGun() {
@@ -175,8 +168,8 @@ function findWeapon(name) {
 
 function getPlayerFromID(shotID) {
   console.debug("Receieved shot from Shot ID:", shotID, "checking current playerlist", playerList);
-  return playerList.find(player => player.gunID === shotID) || 
-         console.log("Could not find player with Shot ID:", shotID, "in", playerList);
+  return playerList.find(player => player.gunID === shotID) ||
+    console.log("Could not find player with Shot ID:", shotID, "in", playerList);
 }
 
 function timer() {
@@ -198,7 +191,7 @@ function syncIndicators() {
 }
 
 function reload() {
-  if (playerState === "dead") {
+  if (playerState === "dead" || secondsLeft <= 0) {
     // dead players can't shoot :^)
     return;
   }
@@ -266,6 +259,15 @@ function irEvent(event) {
   const weapon = weaponDefinitions.find(w => w.slotID === weaponID);
   const damage = weapon ? weapon.damage : 0;
 
+  // iOS debugging: convert object to Strings and output them:
+  /*
+  eventString = JSON.stringify(event, null, 4);
+  weaponString = JSON.stringify(weapon, null, 4);
+  damageString = JSON.stringify(damage, null, 4);
+  document.getElementById('mapContainer').innerHTML = "eventString:\n" + eventString + "weaponString:\n" + "damageString:\n" + damageString;
+  alert("eventString:\n" + eventString + "weaponString:\n" + "damageString:\n" + damageString);
+  */
+
   if (damage > 0) {
     showHit();
     playerHealth = playerHealth - damage;
@@ -273,25 +275,27 @@ function irEvent(event) {
 
     if (playerHealth <= 0) {
       let deathInfo = {
-          shooterID: shooterID,
-          shooterName: getPlayerFromID(shooterID).username,
-          killedName: username,
-          weapon: event.weaponID,
-          time: new Date()
+        shooterID: shooterID,
+        shooterName: getPlayerFromID(shooterID).username,
+        killedName: username,
+        weapon: event.weaponID,
+        time: new Date()
       }
-        deathList.push(deathInfo);
-        dead(deathInfo);
+      deathList.push(deathInfo);
+      dead(deathInfo);
     }
   }
 }
 
-let hitAnimation = [
-  { opacity: "1" },
-  { opacity: "0" },
-];
-
 function showHit() {
-  document.getElementById("hit").animate(hitAnimation, 600);
+  // hit animation
+  hitElement = document.getElementById("hit");
+  hitElement.style.opacity = 1;
+  setTimeout(() => {
+    hitElement.style.opacity = 0;
+  }, 600);
+
+  // hit haptic feedback
   if (playerSettings.vibrateOnHit) {
     navigator.vibrate([100]);
   }

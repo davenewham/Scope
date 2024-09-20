@@ -105,6 +105,7 @@ function startGame() {
 
 function endGame() {
   console.log("Game Ended");
+  RecoilGun.removeClip();
   stopMap();
   showLeaderboard();
 }
@@ -198,7 +199,7 @@ function syncIndicators() {
 }
 
 function reload() {
-  if (playerState === "dead") {
+  if (playerState === "dead" || secondsLeft <= 0) {
     // dead players can't shoot :^)
     return;
   }

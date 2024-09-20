@@ -33,8 +33,14 @@ function onMessage(event) {
     case 'gameAlreadyStarted':
       // prohibit joinning games that already started, but only when the player is not in a running game
       // it should be possible to remove the first if-statement once the reconnecting is fixed
-      if(document.getElementById('ftsetup').style.display && document.getElementById('ftsetup').style.display != "none") {
+      if (!document.getElementById('ftsetup').style.display || document.getElementById('ftsetup').style.display != "none") {
         document.getElementById('splash').style.display = 'block';
+        document.getElementById('ftsetup').style.display = 'none';
+        document.getElementById('lobby').style.display = 'none';
+        document.getElementById('mainScreen').style.display = 'none';
+
+        // okay, just hide the whole body, because the other elements could be displayed again
+        document.querySelector('body').style.display = 'none'
         alert('Game already started. Please come back later.')
         break;
       }

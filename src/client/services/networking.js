@@ -30,6 +30,10 @@ function onMessage(event) {
     case 'kill':
       enemyKilled();
       break;
+    case 'gameAlreadyStarted':
+      document.getElementById('splash').style.display = 'block';
+      alert('Game already started. Please come back later.')
+      break;
   }
 }
 
@@ -42,7 +46,7 @@ function onOpen() {
   }
 
   // reconnect if player already had a username and an uuid
-  if(username && uuid) {
+  if (username && uuid) {
     reconnectMsg["uuid"] = uuid;
     socket.send(JSON.stringify(reconnectMsg))
   }

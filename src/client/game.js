@@ -258,6 +258,15 @@ function irEvent(event) {
   const weapon = weaponDefinitions.find(w => w.slotID === weaponID);
   const damage = weapon ? weapon.damage : 0;
 
+  // iOS debugging: convert object to Strings and output them:
+  /*
+  eventString = JSON.stringify(event, null, 4);
+  weaponString = JSON.stringify(weapon, null, 4);
+  damageString = JSON.stringify(damage, null, 4);
+  document.getElementById('mapContainer').innerHTML = "eventString:\n" + eventString + "weaponString:\n" + "damageString:\n" + damageString;
+  alert("eventString:\n" + eventString + "weaponString:\n" + "damageString:\n" + damageString);
+  */
+
   if (damage > 0) {
     showHit();
     playerHealth = playerHealth - damage;

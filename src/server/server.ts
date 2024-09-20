@@ -70,6 +70,10 @@ httpServer.listen(serverPort, () => {
 });
 
 function handleJoin(ws: WebSocket & { id?: number; game?: Game; player?: Player }, command: any) {
+	if (ws.game) {
+		console.log("Player has already joined game");
+		return;
+	}
 	if (game.state !== "waiting") {
 		console.log("Join rejected: Game already in progress");
 		ws.send(JSON.stringify({ msgType: "gameAlreadyStarted" }));
@@ -85,10 +89,6 @@ function handleJoin(ws: WebSocket & { id?: number; game?: Game; player?: Player 
 		ws.player = player;
 		console.log(`ws now should have a game: ${inspect(ws.game)}`);
 		console.log(`as well as a player: ${inspect(ws.player)}`);
-	}
-	if (ws.game) {
-		console.log("Player has already joined game");
-		return;
 	}
 }
 

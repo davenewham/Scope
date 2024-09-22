@@ -6,7 +6,7 @@ const SOUND_RELOAD = "reload"
  * @typedef {SOUND_GUNSHOT | SOUND_RELOAD} Sound
  */
 
-function ensureAudioContext() {
+export function ensureAudioContext() {
   // only load the audioContext after user interaction, otherwise we won't get one.
   if (audioContext === null) {
     audioContext = new AudioContext();
@@ -16,7 +16,7 @@ function ensureAudioContext() {
 /**
  * @param {Sound} sound
  */
-function playSound(sound) {
+export function playSound(sound) {
   ensureAudioContext();
   var source = audioContext.createBufferSource();
   source.buffer = gunSounds[sound];
@@ -28,7 +28,7 @@ function playSound(sound) {
  * @param {Sound} name
  * @param {string} url
  */
-function loadSound(name, url) {
+export function loadSound(name, url) {
   ensureAudioContext();
   var request = new XMLHttpRequest();
   request.open('GET', url, true);

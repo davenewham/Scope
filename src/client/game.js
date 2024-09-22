@@ -1,3 +1,9 @@
+import {bleFailure, bleSuccess } from "../client/utils/setup.js"
+import {getSocket} from "../client/services/networking.js"
+const socket = getSocket();
+localStorage.debug = '*';
+let isListenerInitialized = false;
+
 // Game
 let lobbyRoster = document.getElementById("roster");
 let readyBtn = document.getElementById("readyBtn");
@@ -37,14 +43,9 @@ let weaponDefinitions = [
 ];
 
 //Lobby stuff
-function lobbyUpdated(players) {
-  let uuid = "";
-
+export function lobbyUpdated(players) {
   lobbyRoster.innerHTML = "";
   players.forEach((player, i) => {
-    if ((uuid === null || uuid == "") && (player.username === username)) {
-      uuid = player.uuid;
-    }
     let container = document.createElement("DIV");
     let text = document.createElement("H3");
     container.classList.add('player');
@@ -60,17 +61,17 @@ function lobbyUpdated(players) {
 /**
  * Is executed every time the "ready" button is pressed to send the ready state to the server.
  */
-function ready() {
+export function ready() {
   if (readyBtn.classList.contains("readyBtnPressed")) {
     readyBtn.classList.remove("readyBtnPressed");
-    socket.send(JSON.stringify({ 'msgType': 'setState', 'state': 'lobby' }));
+    socket.emit('game', {msgType: 'setState'}, {state: 'lobby' });
   } else {
     readyBtn.classList.add("readyBtnPressed");
-    socket.send(JSON.stringify({ 'msgType': 'setState', 'state': 'ready' }));
+    socket.emit('game', {msgType: 'setState'}, { state: 'ready' });
   }
 }
 
-function preGameStart(cooldown) {
+export function preGameStart(cooldown) {
   // audio test stuff
   loadSound(SOUND_GUNSHOT, "/audio/1911/1911_shot.wav");
   loadSound(SOUND_RELOAD, "/audio/1911/1911_reload.wav");
@@ -93,7 +94,7 @@ function preGameStart(cooldown) {
   //show countdown stuff hide all setup stuff
 }
 
-function startGame() {
+export function startGame() {
   startGun();
   console.log("Game Started");
   secondsLeft = gameSettings.gameTimeMins * 60;
@@ -103,13 +104,13 @@ function startGame() {
   startMap();
 }
 
-function endGame() {
+export function endGame() {
   console.log("Game Ended");
   stopMap();
   showLeaderboard();
 }
 
-function showLeaderboard() {
+export function showLeaderboard() {
   let fade = [
     { opacity: "0" },
     { opacity: "1" },
@@ -118,7 +119,7 @@ function showLeaderboard() {
   leaderBoard.animate(fade, 500);
 }
 
-function backToLobby() {
+export function backToLobby() {
   readyBtn.classList.remove("readyBtnPressed");
   document.getElementById("lobby").style.display = "grid";
   let fade = [
@@ -130,7 +131,7 @@ function backToLobby() {
   });
 }
 
-function readyGun() {
+export function readyGun() {
   currentWeapon = findWeapon(gameSettings.defaultWeapon);
   RecoilGun.gunSettings.shotId = playerGameData.gunID;
   // Let the gun know we want this ID!
@@ -143,7 +144,7 @@ function readyGun() {
   RecoilGun.switchWeapon(currentWeapon.slotID);
 }
 
-function startGun() {
+export function startGun() {
   if (gameSettings.startAmmo == "full") {
     loadedAmmo = currentWeapon.maxLoadedAmmo;
     availableRoundsLeft = currentWeapon.maxLoadedAmmo * currentWeapon.maxClips;
@@ -159,7 +160,7 @@ function startGun() {
  * @param {string} name
  * @returns WeaponDefinition
  */
-function findWeapon(name) {
+export function findWeapon(name) {
   let theWeapon = null;
   weaponDefinitions.forEach((weapon, i) => {
     if (weapon.name == name) {
@@ -173,13 +174,13 @@ function findWeapon(name) {
   }
 }
 
-function getPlayerFromID(shotID) {
+export function getPlayerFromID(shotID) {
   console.debug("Receieved shot from Shot ID:", shotID, "checking current playerlist", playerList);
   return playerList.find(player => player.gunID === shotID) || 
          console.log("Could not find player with Shot ID:", shotID, "in", playerList);
 }
 
-function timer() {
+export function timer() {
   secondsLeft = secondsLeft - 1;
   let mins = Math.floor(secondsLeft / 60);
   let seconds = secondsLeft % 60;
@@ -191,13 +192,13 @@ function timer() {
   }
 }
 
-function syncIndicators() {
+export function syncIndicators() {
   updateAmmo();
   updateHealth();
   updateStats();
 }
 
-function reload() {
+export function reload() {
   if (playerState === "dead") {
     // dead players can't shoot :^)
     return;
@@ -227,7 +228,7 @@ function reload() {
   }
 }
 
-function updateAmmo() {
+export function updateAmmo() {
   if (reloading) {
     document.getElementById("ammoDisplayElement").innerHTML = "--/--";
   } else {
@@ -237,7 +238,7 @@ function updateAmmo() {
 /**
  * @param {null | number} ammo
  */
-function ammoChanged(ammo) {
+export function ammoChanged(ammo) {
   if (ammo !== null) {
     if (ammo < loadedAmmo) {
       playSound(SOUND_GUNSHOT);
@@ -247,17 +248,17 @@ function ammoChanged(ammo) {
   }
 }
 
-function updateStats() {
+export function updateStats() {
   document.getElementById("kills").innerHTML = kills.toString();
   document.getElementById("ingameleaderboard").innerHTML = "1st";
   document.getElementById("deaths").innerHTML = deathList.length.toString();
 }
 
-function updateHealth() {
+export function updateHealth() {
   document.getElementById("healthBar").value = playerHealth;
 }
 
-function irEvent(event) {
+export function irEvent(event) {
   if (playerState === "dead") {
     return;
   }
@@ -290,19 +291,22 @@ let hitAnimation = [
   { opacity: "0" },
 ];
 
-function showHit() {
+export function showHit() {
   document.getElementById("hit").animate(hitAnimation, 600);
   if (playerSettings.vibrateOnHit) {
     navigator.vibrate([100]);
   }
 }
 
-function dead(deathInfo) {
+export function dead(deathInfo) {
   let countdown = gameSettings.deadTimeSeconds;
   updateDeathScreen();
   document.getElementById("respawnTimer").innerHTML = countdown;
   RecoilGun.removeClip();
-  socket.send(JSON.stringify({ "msgType": "kill", "info": deathInfo }));
+  socket.emit("kill",{ 
+    info: deathInfo 
+  }
+  );
   stopMap();
   document.getElementById("death").style.display = "block";
   playerState = "dead";
@@ -318,13 +322,13 @@ function dead(deathInfo) {
   }, 1000);
 }
 
-function enemyKilled() {
+export function enemyKilled() {
   kills = kills + 1;
   updateStats();
   // see ya...
 }
 
-function updateDeathScreen() {
+export function updateDeathScreen() {
   let death = deathList[deathList.length - 1];
 
   // try to get the player name, write unknown otherwise
@@ -343,7 +347,7 @@ function updateDeathScreen() {
   document.getElementById("killedWith").innerHTML = killWeapon;
 }
 
-function respawn() {
+export function respawn() {
   startMap();
   playerState = "alive";
   playerHealth = 100;
@@ -357,9 +361,16 @@ function respawn() {
 /**
  * set the event listeners
  */
+
 continueBtn.addEventListener("click", backToLobby);
 readyBtn.addEventListener("click", ready);
+
+// dirty workaround - we currently import game.js elsewhere, this creates multiple handlers
+// browsers aren't happy about this because bluetooth connections should be secure, and 
+// initated by an identifiable user action
+// TODO: remove isListenerInitialized workaround
 document.getElementById("connectGunbtn").addEventListener("click", () => {
+  if (isListenerInitialized) return;
   console.log("Connecting to gun.");
   RecoilGun.connect().then(() => {
     bleSuccess();
@@ -375,6 +386,7 @@ document.getElementById("connectGunbtn").addEventListener("click", () => {
     console.log("Failure to connect", error);
     bleFailure();
   });
+  isListenerInitialized = true; 
 });
 
 window.onbeforeunload = (evt) => {

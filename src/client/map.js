@@ -3,7 +3,7 @@ var mapParent = document.getElementById("mapContainer");
 var context = canvas.getContext("2d");
 var mapImage = new Image();
 var positionWatcher = null;
-mapImage.src = "/public/imgs/map.png";
+mapImage.src = "/imgs/map.png";
 window.onload = () => {
   canvas.width = mapParent.clientWidth;
   canvas.height = mapParent.clientHeight;
@@ -25,7 +25,7 @@ let inputY = 0;
 let mapEnable = true;
 let heading = 0;
 
-function draw() {
+export function draw() {
   rotation = rotation + (((((0-heading)-rotation)%360)+540)%360-180) / 15
   if (rotation > 360) {
     rotation = rotation - 360;
@@ -59,11 +59,11 @@ function draw() {
   drawBox(50, 50, rotation);
 }
 
-function toRadians(x) {
+export function toRadians(x) {
   return (Math.PI / 180) * x;
 }
 
-function drawBox(x, y, rat) {
+export function drawBox(x, y, rat) {
   context.save();
   context.translate(x, y);
   context.rotate(0 - toRadians(rat));
@@ -72,7 +72,7 @@ function drawBox(x, y, rat) {
   context.restore();
 }
 
-function startMap() {
+export function startMap() {
   sensor.start();
   let options = {
     enableHighAccuracy: true,
@@ -90,18 +90,18 @@ function startMap() {
   draw();
 }
 
-function stopMap() {
+export function stopMap() {
   sensor.stop();
   mapEnable = false;
   navigator.geolocation.clearWatch(positionWatcher);
 }
 
-function posChanged(position) {
+export function posChanged(position) {
   inputY = longitudeToRatio(position.coords.longitude);
   inputX = latitudeToRatio(position.coords.latitude);
 }
 
-function compassHeading(alpha, beta, gamma) {
+export function compassHeading(alpha, beta, gamma) {
   // Convert degrees to radians
   let alphaRad = alpha * (Math.PI / 180);
   let betaRad = beta * (Math.PI / 180);
@@ -131,12 +131,12 @@ function compassHeading(alpha, beta, gamma) {
   return compassHeading;
 }
 
-// window.addEventListener('deviceorientation', function(evt) {
+// window.addEventListener('deviceorientation', export function(evt) {
 // heading = compassHeading(evt.alpha, evt.beta, evt.gamma);
 //   // Do something with 'heading'...
 // }, false);
 
-function handleSensor(e){
+export function handleSensor(e){
   let orientation = toEuler(e.target.quaternion);
   heading = compassHeading(orientation.yaw, orientation.pitch, orientation.roll) + 180;
   if (isNaN(heading)) {
@@ -144,12 +144,12 @@ function handleSensor(e){
   }
 }
 
-function longitudeToRatio(longitude) {
+export function longitudeToRatio(longitude) {
   //return scaleNum(longitude, [redacted], [redacted], 100, 0);
   return 50;
 }
 
-function latitudeToRatio(latitude) {
+export function latitudeToRatio(latitude) {
   //return scaleNum(latitude, [redacted], [redacted], 0, 100);
   return 50;
 }
@@ -158,7 +158,7 @@ const scaleNum = (num, in_min, in_max, out_min, out_max) => {
   return (num - in_min) * (out_max - out_min) / (in_max - in_min) + out_min;
 }
 
-function toEuler(q) {
+export function toEuler(q) {
       let orientation = {};
       // roll
       let sinr_cosp = 2 * (q[3] * q[0] + q[1] * q[2]);

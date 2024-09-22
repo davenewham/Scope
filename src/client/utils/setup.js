@@ -1,16 +1,24 @@
+import { getSocket } from '../services/networking.js';
+import { enterFullscreen, setWakeLock,fakeFullscreenAndWakeLock, wakeLock, fullscreen  } from './utils.js'
+import { phoneInfo } from './phoneinfo.js';
+
+// it's nonsense that this file is also requiring to directly call ws.
+// TODO: refactor
+let socket;
+
 // variables
 let username;
 let storedUsername;
-let gunChoice;
-let phoneInfo = {};
+//let gunChoice;
 
 let fullScreenPermBtn = document.getElementById("fullscreenPerm");
 let wakeLockPermBtn = document.getElementById("wakeLockPerm");
 let locationPermBtn = document.getElementById("locationPerm");
 
 window.onload = function() {
-  checkPhoneInfo();
-  if (!("bluetooth" in navigator)) {
+  socket = getSocket();
+  console.log(socket)
+  if (!phoneInfo.bluetoothAvailable) {
     document.getElementById("incompatable").style.display = "grid";
   }
   storedUsername = localStorage.getItem("username");
@@ -20,19 +28,21 @@ window.onload = function() {
   document.getElementById("splash").style.display = "none";
   document.getElementById("ftsetup").style.display = "block";
   document.getElementById("setupusername").style.display = "grid";
-  fullScreenPermBtn.addEventListener("click", enterFullscreen);
+  fullScreenPermBtn.addEventListener("click", (event) => enterFullscreen(event.target));
   window.addEventListener("keydown", (e) => {
     if (e.key === "f") {
-      fakeFullscreenAndWakeLock();
+      fakeFullscreenAndWakeLock(fullScreenPermBtn, wakeLockPermBtn);
     }
   })
   console.log("press f on desktop to skip to pairing");
-  wakeLockPermBtn.addEventListener("click", setWakeLock);
+  wakeLockPermBtn.addEventListener("click", (event) => setWakeLock(event.target));
   locationPermBtn.addEventListener("click", allowGPS);
   document.getElementById("splash").style.display = "none";
 };
-
-function submitUsername() {
+window.submitUsername = submitUsername;
+export function submitUsername() {+
+  console.log(socket)
+  socket.emit("join");
   username = document.getElementById("username").value;
   // if ((username == "") && (storedUsername != undefined)) {
   //   username = storedUsername;
@@ -45,14 +55,14 @@ function submitUsername() {
     alert("Username cannot be shorter than 2 characters");
   } else {
     localStorage.setItem("username", username);
-    let usernamejson = {"msgType":"setUsername","username":username};
-    socket.send(JSON.stringify(usernamejson));
+    socket.emit("setUsername",
+    { username: username });
     showPhoneSetupMenu();
     document.getElementById("setupusername").style.display = "none";
   }
 }
 
-function allowGPS() {
+export function allowGPS() {
   if (navigator.geolocation) {
     console.log(navigator.geolocation.getCurrentPosition(geoSuccess, (error)=>{
       switch(error.code) {
@@ -75,7 +85,7 @@ function allowGPS() {
   }
 }
 
-function geoSuccess(position) {
+export function geoSuccess(position) {
   if (position != undefined) {
     console.log("GPS is enabled.");
     locationPermBtn.classList.add("permAllowed");
@@ -84,22 +94,22 @@ function geoSuccess(position) {
   }
 }
 
-function bleSuccess() {
+export function bleSuccess() {
   document.getElementById("lobby").style.display = "grid";
   document.getElementById("setupgun").style.display = "none";
   document.getElementById("ftsetup").style.display = "none";
-  socket.send(JSON.stringify({'msgType':'setState', 'state':'lobby'}));
+  socket.emit('game', {msgType: 'setState'}, { state: 'lobby' });
 }
-function bleFailure(error) {
+export function bleFailure(error) {
   document.getElementById("connectGunbtn").classList.add('greenbtn');
   document.getElementById("connectGunbtn").classList.remove('disabledbtn');
 }
-function bleSetLoading() {
+export function bleSetLoading() {
   document.getElementById("connectGunbtn").classList.add('disabledbtn');
   document.getElementById("connectGunbtn").classList.remove('greenbtn');
 }
 
-function showPhoneSetupMenu() {
+export function showPhoneSetupMenu() {
   if (phoneInfo.wakeLockAvailable) {
     wakeLockPermBtn.style.display = "grid";
   } else {
@@ -119,11 +129,11 @@ function showPhoneSetupMenu() {
   document.getElementById("setupphone").style.display = "grid";
 }
 
-function showGunSetupMenu() {
+export function showGunSetupMenu() {
   document.getElementById("setupgun").style.display = "grid";
 }
 
-function checkPerms() {
+export function checkPerms() {
   let ready = true;
   if (phoneInfo.fullscreenAvailable) {
     if (fullscreen != true) {

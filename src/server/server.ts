@@ -1,5 +1,5 @@
 import { Server } from "socket.io";
-import express from "express";
+//import express from "express";
 import * as fsp from "fs/promises";
 import * as fs from "fs";
 import * as https from "https";
@@ -13,7 +13,6 @@ const serverPort = 3000;
 let defaultSettings;
 
 let weaponDefinitions: WeaponDefinition[] = [];
-let socketCounter = 0;
 
 
 let game: Game = {
@@ -62,13 +61,13 @@ const httpsServer = https.createServer(
 		key: fs.readFileSync("certs/server.key"),
 		cert: fs.readFileSync("certs/server.cert"),
 	},
-	express()
+	//express()
 );
 
 const io = new Server(httpsServer);
 
 httpsServer.listen(serverPort, () => {
-	console.log("Server listening at https://localhost:3000/");
+	console.log(`Server listening at https://localhost:${serverPort}/`);
 });
 
 function handleJoin(socket: any & { id?: number; game?: Game; player?: Player }, command: any) {
@@ -77,14 +76,14 @@ function handleJoin(socket: any & { id?: number; game?: Game; player?: Player },
 		socket.emit({ msgType: "gameAlreadyStarted" });
 		return;
 	}
-	if (socket.game) {
-		console.log("Player has already joined game");
-		return;
-	}
+	// if (socket.game) {
+	// 	console.log("Player has already joined game");
+	// 	return;
+	// }
 	const player: Player = {
 		username: undefined,
 		socket: socket,
-		uuid: makeUID(10),
+		uuid: socket.id,
 	};
 	game.players.push(player);
 	socket.game = game;
@@ -93,63 +92,59 @@ function handleJoin(socket: any & { id?: number; game?: Game; player?: Player },
 
 
 io.on("connection", (socket: any & { id?: number; game?: Game; player?: Player }) => {
-	console.log("Websocket Connection | WSID:", socket.id);
-
-	socket.on("message", (message) => {
-		const command = JSON.parse(message);
-		console.log(command);
-		switch (command.msgType) {
-			case "join":
-				handleJoin(socket, command);
-				break;
-			case "reconnect":
-				if (socket.game) {
-					console.log("Player is already connected");
-					break;
-				}
-				const playerdata = socket.game.players.find(player => {
-					return player.uuid == command.uuid;
-				});
-				if (!playerdata) {
-					console.log("Could not find player uuid to reconnect");
-					break;
-				}
-				playerdata.socket = socket;
-				socket.game = game;
-				break;
-			case "updateGameSettings":
-				game.settings = command.settings;
-				break;
-
-			case "updateWeaponDefinitions":
-				weaponDefinitions = command.weaponDefinitions;
-				break;
-
-			case "setUsername":
-				socket.player.username = command.username;
-				lobbyUpdate(socket.game.players);
-				break;
-
-			default:
-				if (game) {
-					handleGameMessage(socket, command);
-				}
-				break;
+	socket.on("game", (...args) => {
+		if (game) {
+			handleGameMessage(socket, args);
 		}
 	});
-	socket.on("disconnect", () => {
-		let missingPlayerIndex = game.players.findIndex(player => player.socket.id === socket.id);
-		if (missingPlayerIndex == -1) {
-			console.log("could not find player to remove");
-			return;
-		}
-		console.log(`${game.players[missingPlayerIndex].username || "Player"} Disconnected`);
-		if (game.state == "waiting") {
-			game.players.splice(missingPlayerIndex, 1);
-			lobbyUpdate(game.players);
-		}
+	socket.on("join", (...args) => {
+		console.log("Socket.io Connection | WSID:", socket.id);
+		handleJoin(socket, args);
 	});
-});
+	socket.on("join", (...args) => {
+		console.log("Socket.io Connection | WSID:", socket.id);
+		handleJoin(socket, args);
+	});
+	socket.on("reconnect", (...args) => {
+		if (socket.game) {
+			console.log("Player is already connected");
+		}
+		const playerdata = socket.game.players.find(player => {
+			return player.uuid == socket;
+		});
+		if (!playerdata) {
+			console.log("Could not find player uuid to reconnect");
+		}
+		playerdata.socket = socket;
+		socket.game = game;
+	});
+	socket.on("updateGameSettings", (settings) => {
+		game.settings = settings;
+	});
+	socket.on("updateWeaponDefinitions", (weaponDefinitions) => {
+		weaponDefinitions = weaponDefinitions;
+	});
+	socket.on("setUsername", (username) => {
+		socket.player.username = username.username;
+		lobbyUpdate(socket.game.players);
+	});
+				
+
+
+	});
+	// socket.on("disconnect", () => {
+	// 	let missingPlayerIndex = game.players.findIndex(player => player.socket.id === socket.id);
+	// 	if (missingPlayerIndex == -1) {
+	// 		console.log("could not find player to remove");
+	// 		return;
+	// 	}
+	// 	console.log(`${game.players[missingPlayerIndex].username || "Player"} Disconnected`);
+	// 	if (game.state == "waiting") {
+	// 		game.players.splice(missingPlayerIndex, 1);
+	// 		lobbyUpdate(game.players);
+	// 	}
+	// });
+
 
 function assignPlayersGunIDs(players) {
 	let counter = 1; // Do not give anyone 0!
@@ -206,7 +201,7 @@ function endGame() {
 }
 
 function handleGameMessage(socket, message) {
-	// declare player variable
+	console.log("got game message", message)
 	let player;
 
 	// attempt to set player variable
@@ -268,7 +263,7 @@ function handleGameMessage(socket, message) {
 	}
 }
 
-function makeUID(length) {
+export function makeUID(length) {
 	let result = "";
 	let characters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
 	let charactersLength = characters.length;
@@ -278,8 +273,8 @@ function makeUID(length) {
 	return result;
 }
 
-function lobbyUpdate(players: Player[]) {
-	console.log("lobby update");
+export function lobbyUpdate(players: Player[]) {
+	//console.log("lobby update", players);
 	const filteredPlayerList = players
 		.filter(player => player.state !== undefined)
 		.map(player => ({
@@ -287,10 +282,11 @@ function lobbyUpdate(players: Player[]) {
 			uuid: player.uuid,
 			ready: player.state === "ready",
 		}));
+	//console.log("lobbyUpdate", {players: filteredPlayerList})
 	io.emit("lobbyUpdate", {players: filteredPlayerList})
 }
 
-function playerListUpdate(game: Game) {
+export function playerListUpdate(game: Game) {
 	const filteredPlayerList = game.players
 		.filter(player => player.state === "ready")
 		.map(player => ({

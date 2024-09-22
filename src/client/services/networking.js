@@ -1,36 +1,55 @@
-const socket = new window.WebSocket("wss://" + window.location.host + "/api");
+import { io } from "socket.io-client";
+import {lobbyUpdated, preGameStart} from "../../client/game.js"
 
-socket.onmessage = function (event) {
-  console.log("WebSocket message received:", event.data);
-  let message = JSON.parse(event.data);
-  switch (message.msgType) {
-    case 'lobbyUpdate':
-      lobbyUpdated(message.players);
-      break;
-    case 'updateGameState':
-      if (message.state == "starting") {
-        preGameStart(message.cooldown);
-      }
-      break;
-    case 'updateGameSettings':
-      gameSettings = message.settings;
-      break;
-    case 'assignGunID':
-      playerGameData.gunID = message.GunID;
-      break;
-    case 'updateWeaponDefinitions':
-      weaponDefinitions = message.weapons;
-      break;
-    case 'playerListUpdate':
-      playerList = message.players;
-      break;
-    case 'kill':
-      enemyKilled();
-      break;
-  }
+let socket = null;
+
+export const getSocket = () => {
+  initializeSocket();
+  return socket; 
 };
 
-let initMsg = { "msgType": "join" }
-socket.onopen = () => {
-  socket.send(JSON.stringify(initMsg));
+const initializeSocket = () => {
+  if (!socket) {
+    console.log("INIT")
+    socket = io("wss://" + window.location.host, {});
+
+    socket.on("connect", () => {
+      console.log("connected:", socket.id);
+    });
+
+    socket.on("disconnect", () => {
+      console.log("disconnected:", socket.id);
+    });
+
+
+    socket.on('lobbyUpdate', (message) => {
+      lobbyUpdated(message.players);
+    });
+
+    socket.on('updateGameState', (message) => {
+      if (message.state === "starting") {
+        preGameStart(message.cooldown);
+      }
+    });
+
+    socket.on('updateGameSettings', (message) => {
+      gameSettings = message.settings;
+    });
+
+    socket.on('assignGunID', (message) => {
+      playerGameData.gunID = message.GunID;
+    });
+
+    socket.on('updateWeaponDefinitions', (message) => {
+      weaponDefinitions = message.weapons;
+    });
+
+    socket.on('playerListUpdate', (message) => {
+      playerList = message.players;
+    });
+
+    socket.on('kill', () => {
+      enemyKilled();
+    });
+  }
 };

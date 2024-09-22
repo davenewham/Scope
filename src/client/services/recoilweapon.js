@@ -95,6 +95,7 @@
           this._CONTROLCHAR = controlCharacteristic;
           this._TELEMETRYCHAR = telemetryCharacteristic;
           this.isConnected = true;
+          console.log("Connected to GATT Server")
           resolve();
         } catch (e) {
           console.log(e)

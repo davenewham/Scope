@@ -1,9 +1,11 @@
-let wakeLock = null;
-let fullscreen = false;
+import { checkPerms } from "./setup";
+
+export let wakeLock = null;
+export let fullscreen = false;
 
 //  Wakelock stuff
-async function setWakeLock() {
-  wakeLockPermBtn.classList.add("permAllowed");
+export async function setWakeLock(element) {
+  element.classList.add("permAllowed");
   if ('wakeLock' in navigator) {
     try {
       wakeLock = await navigator.wakeLock.request('screen');
@@ -17,66 +19,29 @@ async function setWakeLock() {
   }
   checkPerms();
 }
-function releaseWakeLock() {
-  try {
+export function releaseWakeLock() {
+  if (wakeLock) {
     wakeLock.release();
-  } catch (err) {
-    console.error(`${err.name}, ${err.message}`);
+    wakeLock = null;
   }
 }
 
 //  Fullscreen stuff
-function enterFullscreen() {
+export function enterFullscreen(element) {
   document.documentElement.requestFullscreen();
   screen.orientation.lock('portrait');
   fullscreen = true;
-  fullScreenPermBtn.classList.add("permAllowed");
+  element.classList.add("permAllowed");
   checkPerms();
 }
-function fakeFullscreenAndWakeLock() {
+export function fakeFullscreenAndWakeLock(fullScreenElement, wakeLockElement) {
   // for debugging on desktop
   fullscreen = true;
   wakeLock = true;
-  fullScreenPermBtn.classList.add("permAllowed");
-  wakeLockPermBtn.classList.add("permAllowed");
+  fullScreenElement.classList.add("permAllowed");
+  wakeLockElement.classList.add("permAllowed");
   checkPerms();
 }
-function exitFullscreen() {
+export function exitFullscreen() {
   document.exitFullscreen();
-}
-
-
-function checkPhoneInfo() {
-  navigator.permissions.query({name:'geolocation'}).then((result)=>{
-    if (result.state == "granted") {
-      phoneInfo.locationEnabled = true;
-    } else {
-      phoneInfo.locationEnabled = false;
-    }
-    if ("geolocation" in document.documentElement) {
-      phoneInfo.locationAvailable = true;
-    } else {
-      phoneInfo.locationAvailable = false;
-    }
-    if ("requestFullscreen" in document.documentElement) {
-      phoneInfo.fullscreenAvailable = true;
-    } else {
-      phoneInfo.fullscreenAvailable = false;
-    }
-    if ("wakeLock" in navigator) {
-      phoneInfo.wakeLockAvailable = true;
-    } else {
-      phoneInfo.wakeLockAvailable = false;
-    }
-    if ("bluetooth" in navigator) {
-      phoneInfo.bluetoothAvailable = true;
-    } else {
-      phoneInfo.bluetoothAvailable = false;
-    }
-    result.onchange = (event) => {
-      if (event.target.state == "granted") {
-        geoSuccess(1);
-      }
-    }
-  });
 }

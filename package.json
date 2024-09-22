@@ -9,7 +9,7 @@
     "dev": "tsc && concurrently \"npm:run\" \"npm:run:server\"",
     "build": "tsc && vite build",
     "run": "vite",
-    "run:server": "node build/server/server.js"
+    "run:server": "DEBUG=none node build/server/server.js"
   },
   "author": "Zach Groening",
   "license": "MIT",
@@ -17,6 +17,7 @@
     "@types/socket.io": "^3.0.2",
     "express": "^4.19.2",
     "socket.io": "^4.7.5",
+    "socket.io-client": "^4.8.0",
     "strip-json-comments": "^5.0.1",
     "ws": "^7.5.10"
   },

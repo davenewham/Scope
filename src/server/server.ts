@@ -75,15 +75,15 @@ io.on("connection", (socket: any & { id?: number; game?: Game; player?: Player }
 	console.log("Websocket Connection | socketID:", socket.id);
 
 	socket.on("join", (data) => {
-		// if (socket.game) {
-		// 	console.log("Player has already joined game");
-		// 	return;
-		// }
-		// if (socket.state !== "waiting") {
-		// 	console.log("Join rejected: Game already in progress");
-		// 	socket.emit("gameAlreadyStarted");
-		// 	return;
-		// } else {
+		if (socket.game) {
+			console.log("Player has already joined game");
+			return;
+		}
+		if (socket.state !== "waiting") {
+			console.log("Join rejected: Game already in progress");
+			socket.emit("gameAlreadyStarted");
+			return;
+		} else {
 			const player: Player = {
 				username: undefined,
 				socket: socket,
@@ -92,9 +92,9 @@ io.on("connection", (socket: any & { id?: number; game?: Game; player?: Player }
 			game.players.push(player);
 			socket.game = game;
 			socket.player = player;
-			//console.log(`socket now should have a game: ${inspect(socket.game)}`);
-			//console.log(`as well as a player: ${inspect(socket.player)}`);
-		// }	
+			// console.log(`socket now should have a game: ${inspect(socket.game)}`);
+			// console.log(`as well as a player: ${inspect(socket.player)}`);
+		}	
 	});
 
 	socket.on("reconnect", (data) => {

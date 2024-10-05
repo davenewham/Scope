@@ -9,7 +9,7 @@ export default defineConfig({
       cert: fs.readFileSync('certs/server.cert'),
     },
     proxy: {
-      '/api': {
+      '/socket.io/': {
         target: 'https://localhost:3000',
         changeOrigin: true,
         secure: false,

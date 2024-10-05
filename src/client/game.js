@@ -62,10 +62,10 @@ function lobbyUpdated(players) {
 function ready() {
   if (readyBtn.classList.contains("readyBtnPressed")) {
     readyBtn.classList.remove("readyBtnPressed");
-    socket.send(JSON.stringify({ 'msgType': 'setState', 'state': 'lobby' }));
+    socket.emit('setState', {'state': 'lobby' });
   } else {
     readyBtn.classList.add("readyBtnPressed");
-    socket.send(JSON.stringify({ 'msgType': 'setState', 'state': 'ready' }));
+    socket.emit('setState',{ 'state': 'ready' });
   }
 }
 
@@ -306,7 +306,7 @@ function dead(deathInfo) {
   updateDeathScreen();
   document.getElementById("respawnTimer").innerHTML = countdown;
   RecoilGun.removeClip();
-  socket.send(JSON.stringify({ "msgType": "kill", "info": deathInfo }));
+  socket.emit("kill",{"info": deathInfo });
   stopMap();
   document.getElementById("death").style.display = "block";
   playerState = "dead";

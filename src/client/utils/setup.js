@@ -46,8 +46,7 @@ function submitUsername() {
     alert("Username cannot be shorter than 2 characters");
   } else {
     localStorage.setItem("username", username);
-    let usernamejson = {"msgType":"setUsername","username":username};
-    socket.send(JSON.stringify(usernamejson));
+    socket.emit("setUsername", {"username":username});
     showPhoneSetupMenu();
     document.getElementById("setupusername").style.display = "none";
   }
@@ -89,7 +88,7 @@ function bleSuccess() {
   document.getElementById("lobby").style.display = "grid";
   document.getElementById("setupgun").style.display = "none";
   document.getElementById("ftsetup").style.display = "none";
-  socket.send(JSON.stringify({'msgType':'setState', 'state':'lobby'}));
+  socket.emit('setState',{ 'state':'lobby'});
 }
 function bleFailure(error) {
   document.getElementById("connectGunbtn").classList.add('greenbtn');

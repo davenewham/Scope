@@ -57,8 +57,7 @@ socket.on('connect', () => {
 
   // reconnect if player already had a username and an uuid
   if (username && uuid) {
-    reconnectMsg["uuid"] = uuid;
-    socket.emit("reconnect", {uuid: ""})
+    socket.emit("reconnect", {uuid: uuid})
   }
   // first join if player doesn't have these attributes yet
   else {

@@ -79,7 +79,7 @@ io.on("connection", (socket: any & { id?: number; game?: Game; player?: Player }
 			console.log("Player has already joined game");
 			return;
 		}
-		if (socket.state !== "waiting") {
+		if (socket.state && socket.state !== "waiting") {
 			console.log("Join rejected: Game already in progress");
 			socket.emit("gameAlreadyStarted");
 			return;
@@ -88,6 +88,7 @@ io.on("connection", (socket: any & { id?: number; game?: Game; player?: Player }
 				username: undefined,
 				socket: socket,
 				uuid: socket.id,
+				kills: 0,
 			};
 			game.players.push(player);
 			socket.game = game;
@@ -174,6 +175,8 @@ io.on("connection", (socket: any & { id?: number; game?: Game; player?: Player }
 			return;
 		}
 
+		killer.kills += 1;
+
 		try {
 			killer.socket.emit("kill", { killed: info.killedName, weapon: info.weapon });
 		} catch (error) {
@@ -244,8 +247,19 @@ function startGame() {
 
 function endGame() {
 	io.emit("updateGameState", { state: "ended" });
+
+	const scoreboard = game.players.map(player => ({
+		username: player.username,
+		kills: player.kills
+	}));
+
+	scoreboard.sort((a, b) => b.kills - a.kills);
+
+	io.emit("scoreboard", {scoreboard});
+
 	console.log(`Game ended (${game.id})`);
 	game.state = "waiting";
+	game.players.forEach(player => player.kills = 0);
 }
 
 function makeUID(length) {

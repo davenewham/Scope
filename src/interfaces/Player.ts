@@ -6,4 +6,5 @@ export interface Player {
     uuid: string;
     state?: string;
     gunID?: number;
+    kills: number;
 }

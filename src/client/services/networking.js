@@ -48,6 +48,10 @@ socket.on('gameAlreadyStarted', () => {
   }
 });
 
+socket.on("scoreboard", ({ scoreboard }) => {
+  console.log("Scoreboard: ", scoreboard);
+  updateScoreboard(scoreboard);
+});
 
 socket.on('connect', () => {
   if ((reconnect_timer !== null)) {

@@ -56,6 +56,21 @@ function lobbyUpdated(players) {
   });
 }
 
+function updateScoreboard(scoreboard){
+      leaderboardList.innerHTML = "";
+
+      scoreboard.forEach((player, index) => {
+          const playerRow = document.createElement("div");
+
+          playerRow.innerHTML = `
+              <h3>${index + 1}. ${player.username}</h3>
+              <p class>Kills: ${player.kills}</p>
+          `;
+
+          leaderboardList.appendChild(playerRow);
+      });
+}
+
 /**
  * Is executed every time the "ready" button is pressed to send the ready state to the server.
  */

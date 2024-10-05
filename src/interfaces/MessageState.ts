@@ -1,5 +1,5 @@
 import { State } from "./State"
 
-export interface GameState {
+export interface MessageState {
     state: State;
 }

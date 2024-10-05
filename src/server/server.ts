@@ -9,6 +9,9 @@ import { WeaponDefinition } from "../interfaces/WeaponDefinition";
 import { Game } from "../interfaces/Game";
 import { Player } from "../interfaces/Player";
 
+import { MessageState } from "../interfaces/MessageState";
+import { State } from "../interfaces/State";
+
 const serverPort = 3000;
 let defaultSettings;
 
@@ -16,7 +19,7 @@ let weaponDefinitions: WeaponDefinition[] = [];
 
 let game: Game = {
 	id: makeUID(6),
-	state: "waiting",
+	state: State.Waiting,
 	players: [],
 	timer: null,
 	gameEnd: null,
@@ -79,7 +82,7 @@ io.on("connection", (socket: any & { id?: number; game?: Game; player?: Player }
 			console.log("Player has already joined game");
 			return;
 		}
-		if (socket.state && socket.state !== "waiting") {
+		if (socket.state && socket.state !== State.Waiting) {
 			console.log("Join rejected: Game already in progress");
 			socket.emit("gameAlreadyStarted");
 			return;
@@ -136,12 +139,12 @@ io.on("connection", (socket: any & { id?: number; game?: Game; player?: Player }
 	})
 
 	socket.on("getGameEndTime", () => {
-		if (game?.state === "started") {
+		if (game?.state === State.Started) {
 		  socket.emit("remainingTime", { time: socket.game.gameEnd });
 		}
 	  });
 
-	socket.on("setState", ({state}) => {
+	socket.on("setState", ({state}: MessageState) => {
 		const player = socket.game?.players.find((p) => p.socket.id === socket.id)
 		if (!player){
 			console.error("Player not found for socket?", socket.id)
@@ -153,7 +156,7 @@ io.on("connection", (socket: any & { id?: number; game?: Game; player?: Player }
 		if (allPlayersReady(socket.game.players)) {
 			console.log("All players are ready.");
 			setTimeout(() => {
-				if (allPlayersReady(socket.game.players) && game.state == "waiting") {
+				if (allPlayersReady(socket.game.players) && game.state == State.Waiting) {
 					startGame();
 				}
 			}, 2000);
@@ -197,7 +200,7 @@ io.on("connection", (socket: any & { id?: number; game?: Game; player?: Player }
 				return;
 			}
 			console.log(`${socket.game.players[missingPlayerIndex].username || "Player"} Disconnected`);
-			if (game.state == "waiting") {
+			if (game.state === State.Waiting) {
 				socket.game.players.splice(missingPlayerIndex, 1);
 				lobbyUpdate(socket.game.players);
 			}
@@ -214,25 +217,25 @@ function assignPlayersGunIDs(players) {
 }
 
 function allPlayersReady(players) {
-	return players.every((player) => player.state === "ready");
+	return players.every((player) => player.state === State.Ready);
 }
 
 function startGame() {
-	if (game.state == "waiting") {
+	if (game.state === State.Waiting) {
 		console.log(`Starting Game (${game.id})`);
-		game.state = "starting";
+		game.state = State.Starting;
 		assignPlayersGunIDs(game.players);
 		playerListUpdate(game);
 		io.emit("updateGameSettings", { settings: game.settings });
 		io.emit("updateWeaponDefinitions", { weapons: weaponDefinitions });
 		io.emit("updateGameState", {
-			state: "starting",
+			state: State.Starting,
 			cooldown: game.settings!.preStartCooldown,
 		});
 
 		setTimeout(() => {
-			game.state = "started";
-			io.emit("updateGameState", {state: "started"});
+			game.state = State.Started;
+			io.emit("updateGameState", {state: State.Started});
 
 			const currentTime = new Date();
 			game.gameEnd = new Date(currentTime.getTime() + 60000 * game.settings!.gameTimeMins); // Korrekte Zeitberechnung
@@ -246,7 +249,7 @@ function startGame() {
 }
 
 function endGame() {
-	io.emit("updateGameState", { state: "ended" });
+	io.emit("updateGameState", { state: State.Ended });
 
 	const scoreboard = game.players.map(player => ({
 		username: player.username,
@@ -258,7 +261,7 @@ function endGame() {
 	io.emit("scoreboard", {scoreboard});
 
 	console.log(`Game ended (${game.id})`);
-	game.state = "waiting";
+	game.state = State.Waiting;
 	game.players.forEach(player => player.kills = 0);
 }
 
@@ -280,7 +283,7 @@ function lobbyUpdate(players: Player[] = []) {
         .map((player) => ({
             username: player.username,
             uuid: player.uuid,
-            ready: player.state === "ready",
+            ready: player.state === State.Ready,
         }));
 
 		io.emit("lobbyUpdate", { players: filteredPlayerList });
@@ -288,7 +291,7 @@ function lobbyUpdate(players: Player[] = []) {
 
 function playerListUpdate(game: Game) {
 	const filteredPlayerList = game.players
-		.filter((player) => player.state === "ready")
+		.filter((player) => player.state === State.Ready)
 		.map((player) => ({
 			username: player.username,
 			uuid: player.uuid,

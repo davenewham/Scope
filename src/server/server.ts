@@ -94,7 +94,7 @@ io.on("connection", (socket: any & { id?: number; game?: Game; player?: Player }
 			socket.player = player;
 			// console.log(`socket now should have a game: ${inspect(socket.game)}`);
 			// console.log(`as well as a player: ${inspect(socket.player)}`);
-		}	
+		}
 	});
 
 	socket.on("reconnect", (data) => {
@@ -133,7 +133,7 @@ io.on("connection", (socket: any & { id?: number; game?: Game; player?: Player }
 		//console.log(socket.game.players)
 		lobbyUpdate(socket.game.players);
 	})
-	
+
 	socket.on("getGameEndTime", () => {
 		if (game?.state === "started") {
 		  socket.emit("remainingTime", { time: socket.game.gameEnd });
@@ -269,9 +269,7 @@ function lobbyUpdate(players: Player[] = []) {
             ready: player.state === "ready",
         }));
 
-        players.forEach((player) => {
-			player.socket.emit("lobbyUpdate", { players: filteredPlayerList });
-		});
+		io.emit("lobbyUpdate", { players: filteredPlayerList });
 };
 
 function playerListUpdate(game: Game) {
@@ -282,7 +280,5 @@ function playerListUpdate(game: Game) {
 			uuid: player.uuid,
 			gunID: player.gunID,
 		}));
-	game.players.forEach((player) => {
-		player.socket.emit("playerListUpdate", { players: filteredPlayerList });
-	});
+	io.emit("playerListUpdate",  { players: filteredPlayerList });
 }

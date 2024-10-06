@@ -57,17 +57,25 @@ function lobbyUpdated(players) {
 }
 
 function updateScoreboard(scoreboard){
-      leaderboardList.innerHTML = "";
+      const scoreboardBody = document.getElementById("scoreboardBody");
+      scoreboardBody.innerHTML = "";
 
-      scoreboard.forEach((player, index) => {
-          const playerRow = document.createElement("div");
+      const loader = document.querySelector(".loader");
+      if (loader) {
+          loader.remove();
+      }
+
+      scoreboard.forEach((player) => {
+          const playerRow = document.createElement("tr");
 
           playerRow.innerHTML = `
-              <h3>${index + 1}. ${player.username}</h3>
-              <p class>Kills: ${player.kills}</p>
+            <td>${player.username}</td>
+            <td>${player.stats.kills}</td>
+            <td>${player.stats.assists}</td>
+            <td>${player.stats.deaths}</td>
           `;
 
-          leaderboardList.appendChild(playerRow);
+          scoreboardBody.appendChild(playerRow);
       });
 }
 
@@ -205,6 +213,12 @@ function syncIndicators() {
   updateStats();
 }
 
+function fireRate(){
+  // Cycle through current fire rate.
+  // 1 shot - 3 shot - full auto
+  // Full auto: 0xFE, Plasma: 0x00, Burst of up to N shots: 0x01-0xFD
+}
+
 function reload() {
   if (playerState === "dead" || secondsLeft <= 0) {
     // dead players can't shoot :^)
@@ -288,8 +302,10 @@ function irEvent(event) {
     playerHealth = playerHealth - damage;
     updateHealth();
 
+
+
     if (playerHealth <= 0) {
-      let deathInfo = {
+      const deathInfo = {
         shooterID: shooterID,
         shooterName: getPlayerFromID(shooterID).username,
         killedName: username,
@@ -298,6 +314,14 @@ function irEvent(event) {
       }
       deathList.push(deathInfo);
       dead(deathInfo);
+    } else {
+      const damageInfo = {
+        shooterID: shooterID,
+        shooterName: getPlayerFromID(shooterID).username,
+        damageAmount: damage,
+        time: new Date()
+      }
+      socket.emit("damage", {"info": damageInfo });
     }
   }
 }
@@ -387,6 +411,7 @@ document.getElementById("connectGunbtn").addEventListener("click", () => {
     RecoilGun.on("irEvent", irEvent);
     RecoilGun.on("ammoChanged", ammoChanged);
     RecoilGun.on("reloadBtn", reload);
+    RecoilGun.on("radioBtn", fireRate);
     RecoilGun.switchWeapon(2);
     RecoilGun.startTelemetry();
     RecoilGun.updateSettings();

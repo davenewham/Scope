@@ -1,4 +1,5 @@
 import { Socket} from "socket.io";
+import { Stats } from "./Stats";
 
 export interface Player {
     username: string | undefined;
@@ -6,5 +7,5 @@ export interface Player {
     uuid: string;
     state?: string;
     gunID?: number;
-    kills: number;
+    stats: Stats
 }

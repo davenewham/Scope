@@ -9,11 +9,14 @@ import { WeaponDefinition } from "../interfaces/WeaponDefinition";
 import { Game } from "../interfaces/Game";
 import { Player } from "../interfaces/Player";
 
-import { MessageState } from "../interfaces/MessageState";
-import { State } from "../interfaces/State";
+import { State } from "../interfaces/State.js";
+import { MessageDamage } from "../interfaces/MessageDamage";
 
 const serverPort = 3000;
 let defaultSettings;
+
+// duplicated between client and server...
+const playerHealth = 100;
 
 let weaponDefinitions: WeaponDefinition[] = [];
 
@@ -91,7 +94,12 @@ io.on("connection", (socket: any & { id?: number; game?: Game; player?: Player }
 				username: undefined,
 				socket: socket,
 				uuid: socket.id,
-				kills: 0,
+				stats: {
+					kills: 0,
+					deaths: 0,
+					assists: 0,
+					damageDealt: new Map<string, number>()
+				},
 			};
 			game.players.push(player);
 			socket.game = game;
@@ -144,7 +152,7 @@ io.on("connection", (socket: any & { id?: number; game?: Game; player?: Player }
 		}
 	  });
 
-	socket.on("setState", ({state}: MessageState) => {
+	socket.on("setState", ({state}) => {
 		const player = socket.game?.players.find((p) => p.socket.id === socket.id)
 		if (!player){
 			console.error("Player not found for socket?", socket.id)
@@ -172,20 +180,58 @@ io.on("connection", (socket: any & { id?: number; game?: Game; player?: Player }
 	socket.on("kill", ({info}) => {
 		console.log(info)
 		const killer = socket.game.players.find(player => player.username == info.shooterName);
+		const victim = socket.game.players.find(player => player.username === info.killedName);
 
 		if (!killer) {
 			console.error(`Shooter not found! ${info.shooterName}`);
 			return;
 		}
 
-		killer.kills += 1;
+		killer.stats.kills += 1;
+		victim.stats.deaths += 1;
+
+		game.players.forEach(player => {
+			if (player.username !== killer.shooterName) {
+				const damage = player.stats.damageDealt.get(victim.username) || 0;
+
+				// Award assist if they did 25% of damage to kill enemy
+				// Possibly in the future we could have this time based? i.e last 30 seconds
+				if (damage > 0 && damage >= playerHealth * 0.25) {
+					player.stats.assists += 1;
+				}
+			}
+		});
+
+		game.players.forEach(player => {
+			player.stats.damageDealt.delete(victim.username);
+		});
 
 		try {
-			killer.socket.emit("kill", { killed: info.killedName, weapon: info.weapon });
+			killer.socket.emit("kill", { killed: killer.name, weapon: info.weapon });
 		} catch (error) {
 			console.log(`Failed to set killer due to ${error}`);
 			console.log(`killer: ${killer}`);
 		}
+	})
+
+	socket.on("damage", ({info}: MessageDamage) => {
+		// TODO
+		// const player = game.players.find(p => p.username === info.shooterName);
+		// const victim = socket.game?.players.find((p) => p.socket.id === socket.id)
+
+		// if (!player || !victim) {
+		// 	console.error(`Error: unable to set damge ${player?.username}, ${victim?.username}`);
+		// 	return;
+		// }
+
+		// if (!player.stats.damageDealt.has(victim.username)) {
+		// 	player.stats.damageDealt.set(victim.username, 0);
+		// }
+
+		// player.stats.damageDealt.set(
+		// 	victim.username,
+		// 	player.stats.damageDealt.get(victim.username)! + info.damageAmount
+		// );
 	})
 
 	socket.on("close", () => {
@@ -253,16 +299,23 @@ function endGame() {
 
 	const scoreboard = game.players.map(player => ({
 		username: player.username,
-		kills: player.kills
+		stats: player.stats
 	}));
 
-	scoreboard.sort((a, b) => b.kills - a.kills);
+	scoreboard.sort((a, b) => b.stats.kills - a.stats.kills);
 
 	io.emit("scoreboard", {scoreboard});
 
 	console.log(`Game ended (${game.id})`);
+
 	game.state = State.Waiting;
-	game.players.forEach(player => player.kills = 0);
+
+    game.players.forEach(player => {
+        player.stats.kills = 0;
+        player.stats.deaths = 0;
+        player.stats.assists = 0;
+        player.stats.damageDealt.clear();
+    });
 }
 
 function makeUID(length) {

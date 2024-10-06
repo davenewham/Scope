@@ -6,8 +6,8 @@
   "type": "module",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "dev": "tsc && concurrently \"npm:run\" \"npm:run:server\"",
-    "build": "tsc && vite build",
+    "dev": "npx tsc && concurrently \"npm:run\" \"npm:run:server\"",
+    "build": "npx tsc && vite build",
     "run": "vite",
     "run:server": "node build/server/server.js"
   },

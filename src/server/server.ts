@@ -140,7 +140,15 @@ io.on("connection", (socket: any & { id?: number; game?: Game; player?: Player }
 	})
 
 	socket.on("setUsername", ({username}) => {
+		const usernameTaken = game.players.some((player) => player.username === username);
+
+		if (usernameTaken) {
+			socket.emit("usernameTaken", { message: "Username already taken." });
+			return;
+		}
+
 		socket.player.username = username;
+		socket.emit("usernameAccepted");
 		//console.log(socket.player.username)
 		//console.log(socket.game.players)
 		lobbyUpdate(socket.game.players);

@@ -47,8 +47,15 @@ function submitUsername() {
   } else {
     localStorage.setItem("username", username);
     socket.emit("setUsername", {"username":username});
-    showPhoneSetupMenu();
-    document.getElementById("setupusername").style.display = "none";
+    socket.once("usernameTaken", (data) => {
+      alert(data.message);
+      document.getElementById("setupusername").focus();
+      return;
+    });
+    socket.once("usernameAccepted", () => {
+      showPhoneSetupMenu();
+      document.getElementById("setupusername").style.display = "none";
+    });
   }
 }
 
